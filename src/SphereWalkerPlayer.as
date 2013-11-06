@@ -12,7 +12,10 @@ package
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.external.ExternalInterface;
+	import flash.geom.Matrix3D;
+	import flash.geom.Vector3D;
 	import flash.utils.Dictionary;
+	import info.smoche.utils.Quaternion;
 	/**
 	 * ...
 	 * @author Toshiyuki Suzumura  / Twitter:@suzumura_ss
@@ -51,8 +54,8 @@ package
 			});
 			
 			if (!ExternalInterface.available) {
-				append_gate("name0", "forest2.jpg", 0, 0, 0, 2);
-				//append_gate("name1", "forest2.jpg", 0, 180, 0, 2);
+				append_gate("name0", "forest2.jpg", 0, 0, 30, 2);
+				append_gate("name1", "forest2.jpg", 0, 90, -30, 2);
 			}
 		}
 		
@@ -124,6 +127,54 @@ package
 			}
 		}
 		
+		protected static const AxisX:Vector3D = new Vector3D(1, 0, 0);
+		protected static const AxisY:Vector3D = new Vector3D(0, 1, 0);
+		protected static const AxisZ:Vector3D = new Vector3D(0, 0, 1);
+		protected var _startQ:Quaternion;
+		protected var _endQ:Quaternion;
+		protected var _step:Number;
+		protected function startRotate(gate:Gate):void
+		{
+			//rotate(-Utils.to_rad(gate.yaw()), Utils.to_rad(gate.pitch()));
+			//updateArrows();
+			
+			// initial Quat
+			var x0:Quaternion = Quaternion.Rotate(AxisX, -Math.PI / 2);
+			var z0:Quaternion = Quaternion.Rotate(AxisZ, -Math.PI / 2);
+			var O:Quaternion = z0.mul(x0);
+			
+			// end Quat
+			var yaw:Number = -Utils.to_rad(gate.yaw());
+			var pitch:Number = -Utils.to_rad(gate.pitch());
+			var y:Quaternion = Quaternion.Rotate(AxisZ, yaw);
+			var p:Quaternion = Quaternion.Rotate(AxisY, pitch);
+			_endQ = y.mul(p).mul(O);
+			
+			// start Quat
+			yaw = currentYaw();
+			pitch = currentPitch();
+			y = Quaternion.Rotate(AxisZ, yaw);
+			p = Quaternion.Rotate(AxisY, pitch);
+			_startQ = y.mul(p).mul(O);
+			
+			var q:Quaternion = _startQ.slerp(_endQ, -0.5);
+			_camera.matrix = q.toMatrix3D();
+			updateArrows();
+			//_parent.addEventListener(Event.ENTER_FRAME, onEnterFrameForRotate);
+		}
+		
+		protected function onEnterFrameForRotate(e:Event):void
+		{
+			_step += 0.1;
+			var q:Quaternion = _startQ.slerp(_endQ, _step);
+			_camera.matrix = q.toMatrix3D();
+			
+			if (_step >= 1.0) {
+				_camera.matrix = _endQ.toMatrix3D();
+				_parent.removeEventListener(Event.ENTER_FRAME, onEnterFrameForRotate);
+			}
+		}
+		
 		protected function setup_next_sphere():void
 		{
 			var g:Gate = _targetGate;
@@ -177,8 +228,7 @@ package
 			_gates[name] = g;
 			
 			arrow.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
-				rotate(-Utils.to_rad(yaw), Utils.to_rad(pitch));
-				updateArrows();
+				startRotate(g);
 			});
 			
 			uploadResources();
