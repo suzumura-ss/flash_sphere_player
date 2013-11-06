@@ -1,0 +1,54 @@
+package  
+{
+	import flash.external.ExternalInterface;
+	/**
+	 * ...
+	 * @author Toshiyuki Suzumura  / Twitter:@suzumura_ss
+	 */
+	public class Utils 
+	{
+		public function Utils() { }
+		
+		// radian - degree conversion
+		static internal function to_deg(rad:Number):Number
+		{
+			return 360.0 * rad / (2.0 * Math.PI);
+		}
+		
+		static internal function to_rad(deg:Number):Number
+		{
+			return 2.0 * Math.PI * deg / 360.0;
+		}
+		
+		// JavaScript callback wrapper
+		static internal function jsCallback(jsFunction:String, data:Object):void
+		{
+			if (ExternalInterface.available) {
+				try {
+					if (jsFunction) ExternalInterface.call(jsFunction, data);
+				} catch (x:Error) {
+					Trace(x);
+				}
+			}
+		}
+		
+		static internal function Trace(msg:Object):void
+		{
+			trace(msg);
+			if (ExternalInterface.available) {
+				try {
+					ExternalInterface.call("console.log", msg.toString());
+				} catch (x:Error) {
+					trace(x);
+				}
+			}
+		}
+		
+		static internal function clipRadian(rad:Number):Number
+		{
+			var x:Number = Math.cos(rad);
+			var y:Number = Math.sin(rad);
+			return Math.atan2(y, x);
+		}
+	}
+}
