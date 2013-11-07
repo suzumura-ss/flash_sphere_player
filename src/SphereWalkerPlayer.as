@@ -32,6 +32,7 @@ package
 		protected var _movingSpeed:Number = 0.05;
 		
 		protected var _locus:Object3D;
+		protected var _locusAlpha:Number;
 		
 		public function SphereWalkerPlayer(width_:Number, height_:Number, parent:Sprite, options:Dictionary = null)
 		{
@@ -135,6 +136,7 @@ package
 			}
 			_locus = new Object3D();
 			_rootContainer.addChild(_locus);
+			_locusAlpha = 1.0;
 		}
 		
 		protected static const AxisX:Vector3D = new Vector3D(1, 0, 0);
@@ -189,7 +191,7 @@ package
 			se = Math.acos(s.dotProduct(e));
 			var cros:Vector3D = s.crossProduct(q);
 			// 矢印の方向と回転が逆の場合は終了位置へのQuatを逆転
-			Utils.Trace([cros, gate.arrow().x, _parent.stage.stageWidth]);
+			//Utils.Trace([cros, gate.arrow().x, _parent.stage.stageWidth]);
 			if ((gate.arrow().rightClipped() && cros.z > 0) || (gate.arrow().leftClipped() && cros.z < 0)) {
 				_endQ = _endQ.neg();
 			}
@@ -219,9 +221,25 @@ package
 			} else {
 				rotate(_endQ.yaw(), _endQ.pitch());
 				_parent.removeEventListener(Event.ENTER_FRAME, onEnterFrameForRotate);
+				_parent.addEventListener(Event.ENTER_FRAME, onEnterFrameForLocusAlpha);
 			}
 			uploadResources();
 			updateArrows();
+		}
+		
+		protected function onEnterFrameForLocusAlpha(e:Event):void
+		{
+			_locusAlpha -= 0.05;
+			if (_locusAlpha > 0) {
+				for (var i:int = 0; i < _locus.numChildren; ++i) {
+					var m:Mesh = _locus.getChildAt(i) as Mesh;
+					m.setMaterialToAllSurfaces(new FillMaterial(0xff4040, _locusAlpha));
+				}
+				uploadResources();
+			} else {
+				initLocus();
+				_parent.removeEventListener(Event.ENTER_FRAME, onEnterFrameForLocusAlpha);
+			}
 		}
 		
 		protected function setup_next_sphere():void
