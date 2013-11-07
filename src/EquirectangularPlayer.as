@@ -5,19 +5,14 @@ package
 	import alternativa.engine3d.core.Object3D;
 	import alternativa.engine3d.core.Resource;
 	import alternativa.engine3d.core.View;
-	import alternativa.engine3d.materials.FillMaterial;
-	import alternativa.engine3d.objects.Mesh;
-	import alternativa.engine3d.objects.WireFrame;
-	import alternativa.engine3d.primitives.Box;
 	import com.sitedaniel.view.components.LoadIndicator;
 	import flash.display.*;
 	import flash.events.*;
 	import flash.external.ExternalInterface;
 	import flash.geom.*;
 	import flash.utils.Dictionary;
-	import flash.utils.Timer;
 	import info.smoche.alternativa.BitmapTextureResourceLoader;
-	import info.smoche.alternativa.NonMipmapBitmapTextureResource;
+	import info.smoche.utils.Utils;
 	
 	/**
 	 * ...
@@ -115,7 +110,7 @@ package
 			}
 		}
 		
-		private function onEnterFrame(e:Event):void
+		protected function onEnterFrame(e:Event):void
 		{
 			_width = _camera.view.width = _parent.stage.stageWidth;
 			_height = _camera.view.height = _parent.stage.stageHeight;
@@ -135,6 +130,15 @@ package
 		public function rotate(yaw:Number, pitch:Number):void
 		{
 			_controller.rotate(yaw, pitch);
+		}
+		
+		protected function currentYaw():Number
+		{
+			return Utils.clipRadian(( Math.PI / 2 + _camera.rotationZ));
+		}
+		protected function currentPitch():Number
+		{
+			return Utils.clipRadian((_camera.rotationX + Math.PI / 2));
 		}
 	}
 }

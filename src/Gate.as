@@ -2,10 +2,10 @@ package
 {
 	import alternativa.engine3d.objects.Mesh;
 	import flash.display.BitmapData;
-	import flash.display.Stage3D;
 	import flash.geom.Vector3D;
 	import info.smoche.alternativa.BitmapTextureResourceLoader;
-	import info.smoche.alternativa.NonMipmapBitmapTextureResource;
+	import info.smoche.utils.Utils;
+
 	/**
 	 * ...
 	 * @author Toshiyuki Suzumura  / Twitter:@suzumura_ss

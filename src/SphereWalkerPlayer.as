@@ -4,18 +4,18 @@ package
 	import alternativa.engine3d.core.Object3D;
 	import alternativa.engine3d.materials.FillMaterial;
 	import alternativa.engine3d.objects.Mesh;
-	import alternativa.engine3d.objects.Sprite3D;
 	import alternativa.engine3d.objects.WireFrame;
 	import alternativa.engine3d.primitives.Box;
-	import flash.display.Bitmap;
+	import alternativa.engine3d.primitives.GeoSphere;
 	import flash.display.Sprite;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.external.ExternalInterface;
-	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
 	import flash.utils.Dictionary;
 	import info.smoche.utils.Quaternion;
+	import info.smoche.utils.Utils;
+
 	/**
 	 * ...
 	 * @author Toshiyuki Suzumura  / Twitter:@suzumura_ss
@@ -30,6 +30,8 @@ package
 		protected var _targetGate:Gate;
 		protected var _movingAlpha:Number;
 		protected var _movingSpeed:Number = 0.05;
+		
+		protected var _locus:Object3D;
 		
 		public function SphereWalkerPlayer(width_:Number, height_:Number, parent:Sprite, options:Dictionary = null)
 		{
@@ -54,8 +56,8 @@ package
 			});
 			
 			if (!ExternalInterface.available) {
-				append_gate("name0", "forest2.jpg", 0, 0, 30, 2);
-				append_gate("name1", "forest2.jpg", 0, 90, -30, 2);
+				append_gate("name0", "forest2.jpg", 0, 30, 0, 2);
+				append_gate("name1", "forest2.jpg", 0, 50, -60, 2);
 			}
 		}
 		
@@ -71,6 +73,7 @@ package
 			_nextMesh.mesh().rotationZ = Utils.to_rad(g.tilt_yaw());
 			_nextMesh.alpha(1.0);
 			_nextMesh.mesh().visible = true;
+			initLocus();
 			uploadResources();
 			
 			_controller.disable();
@@ -111,20 +114,27 @@ package
 			_nextMesh.mesh().z = _targetGate.pos().z * k;
 		}
 		
-		protected function currentYaw():Number
-		{
-			return Utils.clipRadian(( Math.PI / 2 + _camera.rotationZ));
-		}
-		protected function currentPitch():Number
-		{
-			return Utils.clipRadian((_camera.rotationX + Math.PI / 2));
-		}
-		
 		protected function updateArrows():void
 		{
 			for each(var g:Gate in _gates) {
 				g.arrow().moveForCamera(_camera, _parent.stage.stageWidth, _parent.stage.stageHeight);
 			}
+
+			var y:Quaternion = Quaternion.Rotate(AxisZ, currentYaw());
+			var p:Quaternion = Quaternion.Rotate(AxisY, currentPitch());
+			var Q:Quaternion = y.mul(p);
+			var P:Quaternion = new Quaternion(0, 1, 0, 0);
+			var S:Quaternion = Q.conjugate().mul(P).mul(Q);
+			//trace(S.x.toFixed(2), S.y.toFixed(2), S.z.toFixed(2));
+		}
+		
+		protected function initLocus():void
+		{
+			if (_locus) {
+				_rootContainer.removeChild(_locus);
+			}
+			_locus = new Object3D();
+			_rootContainer.addChild(_locus);
 		}
 		
 		protected static const AxisX:Vector3D = new Vector3D(1, 0, 0);
@@ -133,46 +143,85 @@ package
 		protected var _startQ:Quaternion;
 		protected var _endQ:Quaternion;
 		protected var _step:Number;
+		protected var _speed:Number;
 		protected function startRotate(gate:Gate):void
 		{
-			//rotate(-Utils.to_rad(gate.yaw()), Utils.to_rad(gate.pitch()));
-			//updateArrows();
-			
-			// initial Quat
-			var x0:Quaternion = Quaternion.Rotate(AxisX, -Math.PI / 2);
-			var z0:Quaternion = Quaternion.Rotate(AxisZ, -Math.PI / 2);
-			var O:Quaternion = z0.mul(x0);
-			
-			// end Quat
-			var yaw:Number = -Utils.to_rad(gate.yaw());
-			var pitch:Number = -Utils.to_rad(gate.pitch());
-			var y:Quaternion = Quaternion.Rotate(AxisZ, yaw);
-			var p:Quaternion = Quaternion.Rotate(AxisY, pitch);
-			_endQ = y.mul(p).mul(O);
+			initLocus();
+			var p:Quaternion, y:Quaternion;
 			
 			// start Quat
-			yaw = currentYaw();
-			pitch = currentPitch();
-			y = Quaternion.Rotate(AxisZ, yaw);
-			p = Quaternion.Rotate(AxisY, pitch);
-			_startQ = y.mul(p).mul(O);
+			y = Quaternion.Rotate(AxisZ, currentYaw());
+			p = Quaternion.Rotate(AxisY, currentPitch());
+			_startQ = y.mul(p);
 			
-			var q:Quaternion = _startQ.slerp(_endQ, -0.5);
-			_camera.matrix = q.toMatrix3D();
-			updateArrows();
-			//_parent.addEventListener(Event.ENTER_FRAME, onEnterFrameForRotate);
+			// end Quat
+			var yaw:Number = Utils.to_rad(gate.yaw());
+			var pitch:Number = Utils.to_rad(gate.pitch());
+			y = Quaternion.Rotate(AxisZ, -yaw);
+			p = Quaternion.Rotate(AxisY, pitch);
+			_endQ = y.mul(p);
+			
+			// distance
+			var P:Quaternion = new Quaternion(0, 1, 0, 0);
+			var S:Quaternion = _startQ.mul(P).mul(_startQ.conjugate());
+			var E:Quaternion = _endQ.mul(P).mul(_endQ.conjugate());
+			_speed = 1.0 / S.sub(E).length() / 20; // 移動速度（ほぼ）一定
+			
+			// 中間点を計算して
+			var mid:Quaternion = _startQ.slerp(_endQ, 0.5);
+			var Q:Quaternion = mid.mul(P).mul(mid.conjugate());
+			var s:Vector3D = S.toVector3D();
+			var e:Vector3D = E.toVector3D();
+			var q:Vector3D = Q.toVector3D();
+			var se:Number = Math.acos(s.dotProduct(e));
+			var qe:Number = Math.acos(q.dotProduct(e));
+			// 中間点が外側にある場合は終了位置へのQuatを逆転
+			if (Math.abs(se / 2 - qe) > 0.01) {
+				_endQ = _endQ.neg();
+			}
+			
+			// 中間点を再計算
+			mid = _startQ.slerp(_endQ, 0.5);
+			Q = mid.mul(P).mul(mid.conjugate());
+			s = S.toVector3D();
+			e = E.toVector3D();
+			q = Q.toVector3D();
+			se = Math.acos(s.dotProduct(e));
+			var cros:Vector3D = s.crossProduct(q);
+			// 矢印の方向と回転が逆の場合は終了位置へのQuatを逆転
+			Utils.Trace([cros, gate.arrow().x, _parent.stage.stageWidth]);
+			if ((gate.arrow().rightClipped() && cros.z > 0) || (gate.arrow().leftClipped() && cros.z < 0)) {
+				_endQ = _endQ.neg();
+			}
+			
+			// run
+			_step = 0.0;
+			_parent.addEventListener(Event.ENTER_FRAME, onEnterFrameForRotate);
 		}
 		
 		protected function onEnterFrameForRotate(e:Event):void
 		{
-			_step += 0.1;
-			var q:Quaternion = _startQ.slerp(_endQ, _step);
-			_camera.matrix = q.toMatrix3D();
-			
-			if (_step >= 1.0) {
-				_camera.matrix = _endQ.toMatrix3D();
+			_step += _speed;
+			if (_step < 1.0) {
+				var q:Quaternion = _startQ.slerp(_endQ, _step);
+				rotate(q.yaw(), q.pitch());
+				
+				var P:Quaternion = new Quaternion(0, 1, 0, 0);
+				var S:Quaternion = q.mul(P).mul(q.conjugate());
+				//trace(S.x.toFixed(2), S.y.toFixed(2), S.z.toFixed(2));
+				
+				var m:Mesh = new GeoSphere(10);
+				m.setMaterialToAllSurfaces(new FillMaterial(0xff4040));
+				m.x = S.x*900;
+				m.y = S.y*900;
+				m.z = -S.z*900;
+				_locus.addChild(m);
+			} else {
+				rotate(_endQ.yaw(), _endQ.pitch());
 				_parent.removeEventListener(Event.ENTER_FRAME, onEnterFrameForRotate);
 			}
+			uploadResources();
+			updateArrows();
 		}
 		
 		protected function setup_next_sphere():void
@@ -192,10 +241,11 @@ package
 			_worldMesh.mesh().visible = true;
 			_nextMesh.mesh().visible = false;
 			
-			uploadResources();
 			remove_all_gates();
+			initLocus();
 			_gatesRoot.visible = true;
 			_arrowsRoot.visible = true;
+			uploadResources();
 			
 			var js:String = _options["onWalked"];
 			if (ExternalInterface.available && js) {

@@ -4,6 +4,7 @@ package
 	import flash.events.*;
 	import flash.external.ExternalInterface;
 	import flash.utils.Dictionary;
+	import info.smoche.utils.Utils;
 	
 	/**
 	 * ...

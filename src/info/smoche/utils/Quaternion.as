@@ -1,7 +1,5 @@
 package info.smoche.utils
 {
-	import flash.geom.Matrix;
-	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
 	
 	/**
@@ -52,11 +50,27 @@ package info.smoche.utils
 		
 		public function mul(q:Quaternion):Quaternion
 		{
+			var _x:Number = x * q.w + w * q.x + y * q.z - z * q.y;
+			var _y:Number = y * q.w + w * q.y + z * q.x - x * q.z;
+			var _z:Number = z * q.w + w * q.z + x * q.y - y * q.x;
 			var _w:Number = w * q.w - x * q.x - y * q.y - z * q.z;
-			var _x:Number = w * q.x + x * q.w + y * q.z - z * q.y;
-			var _y:Number = w * q.y - x * q.z + y * q.w + z * q.x;
-			var _z:Number = w * q.z + x * q.y - y * q.x + z * q.w;
 			return new Quaternion(_w, _x, _y, _z);
+		}
+		
+		public function mulV(v:Vector3D):Vector3D
+		{
+			// calculate quat * vec
+			var ix:Number = w * v.x + y * v.z - z * v.y;
+			var iy:Number = w * v.y + z * v.x - x * v.z;
+			var iz:Number = w * v.z + x * v.y - y * v.x;
+			var iw:Number = -x * v.x - y * v.y - z * v.z;
+			
+			// calculate result * inverse quat
+			var _x:Number = ix * w + iw * -x + iy * -z - iz * -y;
+			var _y:Number = iy * w + iw * -y + iz * -x - ix * -z;
+			var _z:Number = iz * w + iw * -z + ix * -y - iy * -x;
+			
+			return new Vector3D(_x, _y, _z);
 		}
 		
 		public function conjugate():Quaternion
@@ -69,69 +83,66 @@ package info.smoche.utils
 			return new Quaternion(w * s, x * s, y * s, z * s);
 		}
 		
-		public function norm2():Number
+		public function length2():Number
 		{
 			return w * w + x * x + y * y + z * z;
 		}
-			
-		public function norm():Number
+		
+		public function length():Number
 		{
-			return Math.sqrt(norm2());
+			return Math.sqrt(length2());
 		}
 		
-		public function transform(v:Vector3D):Vector3D
+		public function normalize():Quaternion
 		{
-			var _w:Number = -x * v.x - y * v.y - z * v.z;
-			var _x:Number =  y * v.z - z * v.y + w * v.x;
-			var _y:Number =  z * v.x - x * v.z + w * v.y;
-			var _z:Number =  x * v.y - y * v.x + w * v.z;
-			
-			var vx:Number = _y * -z + _z * y - _w * x + _x * w;
-			var vy:Number = _z * -x + _x * z - _w * y + _y * w;
-			var vz:Number = _x * -y + _y * x - _w * z + _z * w;
-			
-			return new Vector3D(vx, vy, vz);
+			var l:Number = length();
+			return new Quaternion(w / l, x / l, y / l, z / l);
 		}
 		
-		public function toMatrix3D():Matrix3D
+		public function roll():Number
 		{
-			var x2:Number = x * x * 2;
-			var y2:Number = y * y * 2;
-			var z2:Number = z * z * 2;
-			var xy:Number = x * y * 2;
-			var yz:Number = y * z * 2;
-			var zx:Number = z * x * 2;
-			var xw:Number = x * w * 2;
-			var yw:Number = y * w * 2;
-			var zw:Number = z * w * 2;
-			
-			return new Matrix3D(Vector.<Number>([
-				1 - y2 - z2, xy + zw, zx - yw, 0,
-				xy - zw, 1 - z2 - x2, yz + xw, 0,
-				zx + yw, yz - xw, 1 - x2 - y2, 0,
-				0, 0, 0, 1]));
+			return Math.atan2(2 * (y * z + w * x), w * w - x * x - y * y + z * z);
 		}
 		
-		public function slerp(r:Quaternion, t:Number):Quaternion
+		public function pitch():Number
 		{
-			var qr:Number = w * r.w + x * r.x + y * r.y + z * r.z;
-			var ss:Number = 1.0 - qr * qr;
-			
-			if (ss <= 0.0) {
+			return Math.asin( -2 * (x * z - w * y));
+		}
+		
+		public function yaw():Number
+		{
+			return Math.atan2(2 * (x * y + w * z), w * w + x * x - y * y - z * z);
+		}
+		
+		public function toVector3D():Vector3D
+		{
+			return new Vector3D(x, y, z);
+		}
+		
+		public function slerp(r:Quaternion, slerp:Number):Quaternion
+		{
+			var cosHalfTheta:Number =  x * r.x + y * r.y + z * r.z + w * r.w;
+			if (Math.abs(cosHalfTheta) >= 1.0) {
 				return clone();
 			}
-			var sp:Number = Math.sqrt(ss);
-			if (sp == 0.0) {
-				return clone();	// ありえる
-			}
-			var ph:Number = Math.acos(qr);
-			var pt:Number = ph * t;
-			var t1:Number = Math.sin(pt) / sp;
-			var t0:Number = Math.sin(ph - pt) / sp;
-			var _w:Number = w * t0 + r.w * t1;
-			var _x:Number = x * t0 + r.x * t1;
-			var _y:Number = y * t0 + r.y * t1;
-			var _z:Number = z * t0 + r.z * t1;
+			
+			var _x:Number, _y:Number, _z:Number, _w:Number;
+			var halfTheta:Number = Math.acos(cosHalfTheta);
+			var sinHalfTheta:Number = Math.sqrt(1.0 - cosHalfTheta * cosHalfTheta);
+	        if (Math.abs(sinHalfTheta) < 0.001) {
+				_w = (w * 0.5 + r.w * 0.5);
+				_x = (x * 0.5 + r.x * 0.5);
+				_y = (y * 0.5 + r.y * 0.5);
+				_z = (z * 0.5 + r.z * 0.5);
+				return new Quaternion(_w, _x, _y, _z);
+	        }
+			
+			var ratioA:Number = Math.sin((1 - slerp) * halfTheta) / sinHalfTheta;
+			var ratioB:Number = Math.sin(slerp * halfTheta) / sinHalfTheta;
+			_w = (w * ratioA + r.w * ratioB);
+			_x = (x * ratioA + r.x * ratioB);
+			_y = (y * ratioA + r.y * ratioB);
+			_z = (z * ratioA + r.z * ratioB);
 			return new Quaternion(_w, _x, _y, _z);
 		}
 	}

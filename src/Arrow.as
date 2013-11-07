@@ -3,6 +3,7 @@ package
 	import alternativa.engine3d.core.Camera3D;
 	import flash.display.Bitmap;
 	import flash.display.Sprite;
+	import info.smoche.utils.Utils;
 	
 	/**
 	 * ...
@@ -14,6 +15,10 @@ package
 		protected var _pitch:Number;
 		protected var _width:Number;
 		protected var _height:Number;
+		protected var _rightClipped:Boolean;
+		protected var _leftClipped:Boolean;
+		protected var _upperClipped:Boolean;
+		protected var _lowerClipped:Boolean;
 		
 		[Embed(source = "arrow.png")] protected static const ARROW:Class;
 		
@@ -47,21 +52,49 @@ package
 			
 			var x:Number = (dYaw / fovY + 1) * stageWidth / 2;
 			var y:Number = (1 - dPitch / fovP) * stageHeight / 2;
-			
 			var u:Number = Math.abs(dYaw / Math.PI);
 			y += u * stageHeight / 4;
 			
-			
-			if (x < _width) x = _width;
-			if (x > stageWidth - _width) x = stageWidth - _width;
-			if (y < _height) y = _height;
-			if (y > stageHeight - _height) y = stageHeight - _height;
+			_rightClipped = _leftClipped = _upperClipped = _lowerClipped = false;
+			if (x < _width) {
+				x = _width;
+				_leftClipped = true;
+			}
+			if (x > stageWidth - _width) {
+				x = stageWidth - _width;
+				_rightClipped = true;
+			}
+			if (y < _height) {
+				y = _height;
+				_lowerClipped = true;
+			}
+			if (y > stageHeight - _height) {
+				y = stageHeight - _height;
+				_upperClipped = true;
+			}
 			
 			this.x = x;
 			this.y = y;
 			
 			var r:Number = Utils.to_deg(Math.atan2(y - stageHeight / 2, x - stageWidth / 2));
 			this.rotation = r + 90;
+		}
+		
+		public function leftClipped():Boolean
+		{
+			return _leftClipped;
+		}
+		public function rightClipped():Boolean
+		{
+			return _rightClipped;
+		}
+		public function upperClipped():Boolean
+		{
+			return _upperClipped;
+		}
+		public function lowerClipped():Boolean
+		{
+			return _lowerClipped;
 		}
 	}
 }
