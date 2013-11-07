@@ -15,7 +15,7 @@ package
 	
 	public class Main extends Sprite 
 	{
-		protected var _player:SphereWalkerPlayer;
+		protected var _player:EquirectangularPlayer;
 		protected var _stage3D:Stage3D;
 		
 		public function Main():void 
@@ -42,8 +42,9 @@ package
 			
 			var htmlParams:Object = LoaderInfo(root.loaderInfo).parameters;
 			var sourceUrl:String = htmlParams["source"] || "forest.jpg";
+			var playerMode:String = htmlParams["mode"] || "sphere_walker";
 			var opt:Dictionary = new Dictionary();
-			opt["showDiagram"] = (htmlParams["showDiagram"]=="true") || false;
+			opt["showDiagram"] = (htmlParams["showDiagram"]=="true") || true;
 			opt["hideLogo"] = (htmlParams["hideLogo"] == "true") || false;
 			opt["cubic"] = htmlParams["cubic"] || false;
 			opt["wheelControl"] = (htmlParams["wheelControl"] == "true") || false;
@@ -58,32 +59,23 @@ package
 			var y:Number = -Utils.to_rad(Number(htmlParams["yaw"] || "0"));
 			var p:Number = Utils.to_rad(Number(htmlParams["pitch"] || "0"));
 			
-			_player = new SphereWalkerPlayer(stage.stageWidth, stage.stageHeight, this, opt);
+			switch (playerMode) {
+			case "sphere_walker":
+				_player = new SphereWalkerPlayer(stage.stageWidth, stage.stageHeight, this, opt);
+				break;
+			case "sphere_merge":
+				_player = new EquirectangularMergePlayer(stage.stageWidth, stage.stageHeight, this, opt);
+				if (!ExternalInterface.available) {
+					// for debug
+					(_player as EquirectangularMergePlayer).load2("forest2.jpg", 0);
+				}
+				break;
+			default:
+				_player = new EquirectangularPlayer(stage.stageWidth, stage.stageHeight, this, opt);
+				break;
+			}
 			_player.load(sourceUrl, yaw_offset);
 			_player.rotate(y, p);
-			
-			if (ExternalInterface.available) {
-				try {
-					ExternalInterface.addCallback("mousewheel", function(delta:Number):void {
-						var e:MouseEvent = new MouseEvent(MouseEvent.MOUSE_WHEEL, false, false, 0, 0, null, false, false, false, false, delta);
-						_player.onMouseWheel(e);
-					});
-					ExternalInterface.addCallback("rotate", function(yaw:Number, pitch:Number):void {
-						_player.rotate(Utils.to_rad(yaw), Utils.to_rad(pitch));
-					});
-					ExternalInterface.addCallback("load_image", function(sourceUrl:String, yaw_offset:Number):void {
-						_player.load(sourceUrl, yaw_offset);
-					});
-					ExternalInterface.addCallback("append_gate", function(name:String, url:String, tilt_yaw:Number, yaw:Number, pitch:Number, distance:Number):void {
-						_player.append_gate(name, url, tilt_yaw, yaw, pitch, distance);
-					});
-					ExternalInterface.addCallback("remove_gate", function(name:String):void {
-						_player.remove_gate(name);
-					});
-				} catch (x:Error) {
-					Utils.Trace(x);
-				}
-			}
 		}
 	}
 }

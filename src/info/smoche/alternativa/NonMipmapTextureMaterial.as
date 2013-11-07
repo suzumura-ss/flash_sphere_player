@@ -26,11 +26,11 @@ package info.smoche.alternativa
 	 */
 	public class NonMipmapTextureMaterial extends Material
 	{
-		private var _texture:TextureResource;
-		private var _context3d:Context3D;
-		private var _program:ShaderProgram = new ShaderProgram(null, null);
-		private var _vertexShaderAssembler:AGALMiniAssembler = new AGALMiniAssembler();
-		private var _fragmentShaderAssembler:AGALMiniAssembler = new AGALMiniAssembler();
+		protected var _texture:TextureResource;
+		protected var _context3d:Context3D;
+		protected var _program:ShaderProgram = new ShaderProgram(null, null);
+		protected var _vertexShaderAssembler:AGALMiniAssembler = new AGALMiniAssembler();
+		protected var _fragmentShaderAssembler:AGALMiniAssembler = new AGALMiniAssembler();
 		public var alpha:Number;
 		
 		/**
@@ -45,6 +45,11 @@ package info.smoche.alternativa
 			this.alpha = alpha;
 			_context3d = context3d;
 			
+			loadProgram();
+		}
+		
+		protected function loadProgram():void
+		{
 			_vertexShaderAssembler.assemble(Context3DProgramType.VERTEX, [
 				"m44 op, va0, vc0", 	// op = va0[pos] * vc0[projection]
 				"mov v0, va1", 			// v0 = va1[uv]
@@ -55,6 +60,15 @@ package info.smoche.alternativa
 				"mov ft0.w, fc0.x",
 				"mov oc, ft0",
 			].join("\n"));
+		}
+		
+		protected function setupExtraUniforms(drawUnit:DrawUnit):void
+		{
+			/* vc0[modelViewProjectionMatrix], va0[xyz], va1[uv] は設定済み */
+			drawUnit.setFragmentConstantsFromNumbers(0, alpha, 0, 0, 0);				// = fc0
+			drawUnit.setTextureAt(0, _texture._texture);								// = fs0
+			drawUnit.blendSource = Context3DBlendFactor.SOURCE_ALPHA;
+			drawUnit.blendDestination = Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA;
 		}
 		
 		override alternativa3d function fillResources(resources:Dictionary, resourceType:Class):void
@@ -78,10 +92,7 @@ package info.smoche.alternativa
 			drawUnit.setProjectionConstants(camera, 0, object.localToCameraTransform);	// = vc0
 			drawUnit.setVertexBufferAt(0, posBuffer, 0, "float3");						// = va0
 			drawUnit.setVertexBufferAt(1, uvBuffer,  3, "float2");						// = va1
-			drawUnit.setFragmentConstantsFromNumbers(0, alpha, 0, 0, 0);				// = fc0
-			drawUnit.setTextureAt(0, _texture._texture);								// = fs0
-			drawUnit.blendSource = Context3DBlendFactor.SOURCE_ALPHA;
-			drawUnit.blendDestination = Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA;
+			setupExtraUniforms(drawUnit);
 			camera.renderer.addDrawUnit(drawUnit, (objectRenderPriority >= 0)? objectRenderPriority: Renderer.OPAQUE);
 		}
 	}

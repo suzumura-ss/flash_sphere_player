@@ -76,13 +76,31 @@ package
 			
 			// upload
 			uploadResources();
+			
+			// Setup Javascrit interfaces
+			if (ExternalInterface.available) {
+				try {
+					ExternalInterface.addCallback("mousewheel", function(delta:Number):void {
+						var e:MouseEvent = new MouseEvent(MouseEvent.MOUSE_WHEEL, false, false, 0, 0, null, false, false, false, false, delta);
+						onMouseWheel(e);
+					});
+					ExternalInterface.addCallback("rotate", function(yaw:Number, pitch:Number):void {
+						rotate(Utils.to_rad(yaw), Utils.to_rad(pitch));
+					});
+					ExternalInterface.addCallback("load_image", function(sourceUrl:String, yaw_offset:Number):void {
+						load(sourceUrl, yaw_offset);
+					});
+				} catch (x:Error) {
+					Utils.Trace(x);
+				}
+			}
 		}
 		
 		public function load(url:String, yaw_offset:Number):void
 		{
 			_parent.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
 			BitmapTextureResourceLoader.loadBitmapFromURL(url, function(bmp:BitmapData):void {
-				_worldMesh.applyTexture(bmp, _stage3D.context3D);
+				applyBitmapToTexture(bmp);
 				_worldMesh.mesh().rotationZ = Utils.to_rad(yaw_offset);
 				uploadResources();
 				
@@ -93,12 +111,17 @@ package
 				
 				var js:String = _options["onLoadImageCompleted"];
 				if (ExternalInterface.available && js) {
-					ExternalInterface.call(js);
+					ExternalInterface.call(js, url);
 				}
 				_parent.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 			}, function(e:Object):void {
 				Utils.Trace(e);
 			});
+		}
+		
+		protected function applyBitmapToTexture(bitmap:BitmapData):void
+		{
+			_worldMesh.applyTexture(bitmap, _stage3D.context3D);
 		}
 		
 		protected function uploadResources():void

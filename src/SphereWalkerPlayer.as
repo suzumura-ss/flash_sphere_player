@@ -56,6 +56,21 @@ package
 				if (e.buttonDown) updateArrows();
 			});
 			
+			// Setup Javascrit interfaces
+			if (ExternalInterface.available) {
+				try {
+					ExternalInterface.addCallback("append_gate", function(name:String, url:String, tilt_yaw:Number, yaw:Number, pitch:Number, distance:Number):void {
+						append_gate(name, url, tilt_yaw, yaw, pitch, distance);
+					});
+					ExternalInterface.addCallback("remove_gate", function(name:String):void {
+						remove_gate(name);
+					});
+				} catch (x:Error) {
+					Utils.Trace(x);
+				}
+			}
+			
+			// for debug
 			if (!ExternalInterface.available) {
 				append_gate("name0", "forest2.jpg", 0, 30, 0, 2);
 				append_gate("name1", "forest2.jpg", 0, 50, -60, 2);
@@ -273,6 +288,7 @@ package
 		
 		public function append_gate(name:String, url:String, tilt_yaw:Number, yaw:Number, pitch:Number, distance:Number):void
 		{
+			/* ToDo: yaw, pitch を radian にする */
 			var pos:LookAt3D = new LookAt3D(Utils.to_rad(-yaw), Utils.to_rad(pitch));
 			var box:Box = new Box();
 			var fm:FillMaterial = new FillMaterial(0x86c351, 1);
