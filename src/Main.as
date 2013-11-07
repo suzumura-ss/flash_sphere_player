@@ -55,8 +55,8 @@ package
 			opt["onWalked"] = htmlParams["on_walked"];
 			
 			var yaw_offset:Number = Number(htmlParams["yaw_offset"] || "0");
-			var y:Number = Number(htmlParams["yaw"] || "0");
-			var p:Number = Number(htmlParams["pitch"] || "0");
+			var y:Number = -Utils.to_rad(Number(htmlParams["yaw"] || "0"));
+			var p:Number = Utils.to_rad(Number(htmlParams["pitch"] || "0"));
 			
 			_player = new SphereWalkerPlayer(stage.stageWidth, stage.stageHeight, this, opt);
 			_player.load(sourceUrl, yaw_offset);
@@ -69,7 +69,7 @@ package
 						_player.onMouseWheel(e);
 					});
 					ExternalInterface.addCallback("rotate", function(yaw:Number, pitch:Number):void {
-						_player.rotate(yaw, pitch);
+						_player.rotate(Utils.to_rad(yaw), Utils.to_rad(pitch));
 					});
 					ExternalInterface.addCallback("load_image", function(sourceUrl:String, yaw_offset:Number):void {
 						_player.load(sourceUrl, yaw_offset);
