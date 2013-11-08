@@ -65,19 +65,24 @@ package
 		{
 			var ctx:Context3D = _stage3D.context3D;
 			
-			var verts:Vector.<Number> = Vector.<Number>([
-			//  x,       y,     z,
-				-0.01/2, -0.01, 0,
-				 0.01/2, -0.01, 0,
-				 0.01/2,  0.01, 0,
-				-0.01/2,  0.01, 0,
-			]);
-			var indexes:Vector.<uint> = Vector.<uint>([
-				0, 1, 2,
-				0, 2, 3,
-			]);
+			// 楕円ブラシ
+			var verts:Vector.<Number> = Vector.<Number>([0, 0, 0]);
+			var indexes:Vector.<uint> = Vector.<uint>([]);
+			var faces:Number = 16;
+			for (var i:Number = 0; i < faces; i++) {
+				var s:Number = i * Math.PI * 2 / faces;
+				var x:Number = Math.cos(s) * 0.02 / 2;
+				var y:Number = Math.sin(s) * 0.02;
+				verts.push(x, y, 0);
+				if (i < faces - 1) {
+					indexes.push(0, i + 1, i + 2);
+				} else {
+					indexes.push(0, i + 1, 1);
+				}
+			}
 			_brush = new AGALGeometry(ctx, verts, indexes, false);
 			
+			// 全面コピー用のブラシ
 			verts = Vector.<Number>([
 			//  x, y, z,
 				0, 0, 0,
@@ -85,18 +90,31 @@ package
 				1, 1, 0,
 				0, 1, 0,
 			]);
+			indexes = Vector.<uint>([
+				0, 1, 2,
+				0, 2, 3,
+			]);
 			_copyBrush = new AGALGeometry(ctx, verts, indexes, false);
 			
+			// ブラシプログラム
+			// texcel(x:0~1, y:0~1)で位置を指定
 			_brushProgram = new AGALProgram(ctx, [
 				"#texcel=0",
-				"#make_uv=1", 			// [1, 1]
-				// uv = (1 - (vert + texcel))
-				"add vt0, va0, vc0",
-				"sub vt0.xy, vc1.xy, vt0.xy",
-				"mov v0, vt0",
-				// xy = (vert + texcel - 0.5)*2
+				"#make_uv=1", 			// [1, 1, x_mag, y_mag]
 				"#make_pos=2", 			// [0.5, 0.5, 2]
-				"add vt0, va0, vc0",
+				
+				// vert /= mag, vert += texcel [vt0=vert]
+				"mov vt0, va0",
+				"div vt0.x, vt0.x, vc1.z",
+				"div vt0.y, vt0.y, vc1.w",
+				"add vt0, vt0, vc0",
+				
+				// uv = 1 - vert
+				"mov vt1, vt0",
+				"sub vt1.xy, vc1.xy, vt0.xy",
+				"mov v0, vt1",
+				
+				// xy = (vert - 0.5)*2
 				"sub vt0.xy, vt0.xy, vc2.xy",
 				"mul vt0.xy, vt0.xy, vc2.z",
 				"mov op, vt0",
@@ -120,6 +138,10 @@ package
 			if (!_painting || (!e.shiftKey && !e.ctrlKey)) return;
 			
 			var texel:Point = mouseEvent3DToTexcel(e);
+			var y_mag:Number = Math.PI / 3 / _camera.fov;
+			var x_mag:Number = Math.cos(Math.PI * (texel.y - 0.5)) * y_mag;
+			if (x_mag < 0.001) x_mag = 0.001;
+			
 			var prog:AGALProgram = _brushProgram;
 			prog.context(function(ctx:Context3D):void {
 				ctx.setRenderToTexture(_renderTexture.texture());
@@ -127,9 +149,9 @@ package
 				ctx.clear(0, 0, 0, 0, 1, 0, Context3DClearMask.DEPTH|Context3DClearMask.STENCIL);
 				
 				prog.setTexture("texture", ((e.shiftKey)? _paintTexture: _baseTexture).texture());
-				prog.setNumbers("texcel", 1 - texel.x, 1 - texel.y, 0, 0);
-				prog.setNumbers("make_uv",  1, 1);
+				prog.setNumbers("make_uv",  1, 1, x_mag, y_mag);
 				prog.setNumbers("make_pos", 0.5, 0.5, 2);
+				prog.setNumbers("texcel", 1 - texel.x, 1 - texel.y, 0, 0);
 				prog.drawGeometry(_brush);
 				
 				ctx.setRenderToBackBuffer();
@@ -151,9 +173,9 @@ package
 				ctx.clear(0, 0, 0, 0, 1, 0, Context3DClearMask.DEPTH|Context3DClearMask.STENCIL);
 				
 				prog.setTexture("texture", _baseTexture.texture());
-				prog.setNumbers("texcel", 0, 0);
-				prog.setNumbers("make_uv",  1, 1);
+				prog.setNumbers("make_uv", 1, 1, 1, 1);
 				prog.setNumbers("make_pos", 0.5, 0.5, 2);
+				prog.setNumbers("texcel", 0, 0);
 				prog.drawGeometry(_copyBrush);
 				
 				ctx.setRenderToBackBuffer();

@@ -47,7 +47,7 @@ package
 			opt["showDiagram"] = (htmlParams["showDiagram"]=="true") || true;
 			opt["hideLogo"] = (htmlParams["hideLogo"] == "true") || false;
 			opt["cubic"] = htmlParams["cubic"] || false;
-			opt["wheelControl"] = (htmlParams["wheelControl"] == "true") || false;
+			opt["wheelControl"] = (htmlParams["wheelControl"] == "true") || true;
 			opt["angle"] = Number(htmlParams["angle"]) || 60;
 			opt["angleMax"] = Number(htmlParams["angleMax"]) || 120;
 			opt["angleMin"] = Number(htmlParams["angleMin"]) || 30;
