@@ -1,6 +1,7 @@
 package 
 {
 	import flash.display.*;
+	import flash.display3D.Context3DProfile;
 	import flash.events.*;
 	import flash.external.ExternalInterface;
 	import flash.utils.Dictionary;
@@ -30,10 +31,9 @@ package
 			
 			stage.align = StageAlign.TOP_LEFT;
 			stage.scaleMode = StageScaleMode.NO_SCALE;
-			
 			_stage3D = stage.stage3Ds[0];
 			_stage3D.addEventListener(Event.CONTEXT3D_CREATE, onStage3DCreate);
-			_stage3D.requestContext3D();
+			_stage3D.requestContext3D("auto", Context3DProfile.BASELINE_EXTENDED);
 		}
 		
 		protected function onStage3DCreate(e:Event):void
@@ -42,7 +42,7 @@ package
 			
 			var htmlParams:Object = LoaderInfo(root.loaderInfo).parameters;
 			var sourceUrl:String = htmlParams["source"] || "forest.jpg";
-			var playerMode:String = htmlParams["mode"] || "sphere_walker";
+			var playerMode:String = htmlParams["mode"] || "sphere_merge";
 			var opt:Dictionary = new Dictionary();
 			opt["showDiagram"] = (htmlParams["showDiagram"]=="true") || true;
 			opt["hideLogo"] = (htmlParams["hideLogo"] == "true") || false;

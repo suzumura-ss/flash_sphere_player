@@ -12,6 +12,7 @@ package
 	import flash.geom.*;
 	import flash.utils.Dictionary;
 	import info.smoche.alternativa.BitmapTextureResourceLoader;
+	import info.smoche.alternativa.TextureCamera3D;
 	import info.smoche.utils.Utils;
 	
 	/**
@@ -25,7 +26,7 @@ package
 		protected var _height:Number;
 		protected var _parent:Sprite;
 		protected var _stage3D:Stage3D;
-		protected var _camera:Camera3D;
+		protected var _camera:TextureCamera3D;
 		protected var _rootContainer:Object3D;
 		protected var _fixedObjectContainer:Object3D;
 		protected var _controller:PanoramaController;
@@ -54,7 +55,7 @@ package
 			_rootContainer.addChild(_fixedObjectContainer);
 			
 			// camera
-			_camera = new Camera3D(1, 10000);
+			_camera = new TextureCamera3D(1, 10000);
 			_camera.view = new View(_width, _height, false, 0x202020, 0, 4);
 			_rootContainer.addChild(_camera);
 			

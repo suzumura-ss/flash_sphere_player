@@ -2,11 +2,11 @@ package
 {
 	import alternativa.engine3d.alternativa3d;
 	import alternativa.engine3d.core.DrawUnit;
-	import alternativa.engine3d.materials.TextureMaterial;
 	import alternativa.engine3d.resources.TextureResource;
 	import flash.display3D.Context3D;
 	import flash.display3D.Context3DBlendFactor;
 	import flash.display3D.Context3DProgramType;
+	import flash.display3D.textures.TextureBase;
 	import flash.utils.Dictionary;
 	import info.smoche.alternativa.NonMipmapTextureMaterial;
 	
@@ -18,28 +18,29 @@ package
 	public class MergeTextureMaterial extends NonMipmapTextureMaterial 
 	{
 		protected var _paintTexture:TextureResource;
-		protected var _maskTexture:TextureResource;
+		protected var _maskTexture:Vector.<TextureResource>;
+		protected var _maskIndex:uint = 0;
 		
 		/**
 		 * 
 		 * @param	baseTexture		下地のテクスチャ
 		 * @param	paintTexture	上書きするテクスチャ
-		 * @param	maskTexture		上書きテクスチャを表示する領域(R成分)
+		 * @param	maskTexture		上書きテクスチャを表示する領域(R成分), 最低２枚
 		 * @param	context3d
 		 */
-		public function MergeTextureMaterial(baseTexture:TextureResource, paintTexture:TextureResource, maskTexture:TextureResource, context3d:Context3D)
+		public function MergeTextureMaterial(baseTexture:TextureResource, paintTexture:TextureResource, maskTexture:Vector.<TextureResource>, context3d:Context3D)
 		{
 			super(baseTexture, 1.0, context3d);
 			_paintTexture = paintTexture;
 			_maskTexture = maskTexture;
 		}
 		
-		public function updateMaskTexture(maskTexure:TextureResource):void
+		public function assignMaskTexture(index:uint):void
 		{
-			if (_maskTexture._texture) {
-				_maskTexture.dispose();
+			if (index >= _maskTexture.length) {
+				throw RangeError("index less than (" + _maskTexture.length +")");
 			}
-			_maskTexture = maskTexure;
+			_maskIndex = index;
 		}
 		
 		override protected function loadProgram():void 
@@ -65,8 +66,10 @@ package
 			if (_paintTexture != null) {
 				resources[_paintTexture] = true;
 			}
-			if (_maskTexture != null) {
-				resources[_maskTexture] = true;
+			for each (var m:TextureResource in _maskTexture) {
+				if (m != null) {
+					resources[m] = true;
+				}
 			}
 		}
 		
@@ -76,7 +79,7 @@ package
 			drawUnit.setFragmentConstantsFromNumbers(0, 1, 0, 0, alpha);	// fc0 = {x:1, y:0, z:0, w:alpha}
 			drawUnit.setTextureAt(0, _texture._texture);
 			drawUnit.setTextureAt(1, _paintTexture._texture);
-			drawUnit.setTextureAt(2, _maskTexture._texture);
+			drawUnit.setTextureAt(2, _maskTexture[_maskIndex]._texture);
 			drawUnit.blendSource = Context3DBlendFactor.SOURCE_ALPHA;
 			drawUnit.blendDestination = Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA;
 		}
