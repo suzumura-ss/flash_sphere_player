@@ -49,6 +49,19 @@ package info.smoche.alternativa
 			return _texture;
 		}
 		
+		public function attachBitmap(bitmap:BitmapData, flipH:Boolean = false):void
+		{
+			if ((_data.width != bitmap.width) || (_data.height != bitmap.height)) {
+				bitmap = resizeImage(bitmap, _data.width, _data.height);
+			}
+			if (flipH) {
+				bitmap = flipImage(bitmap);
+			}
+			Texture(_texture).uploadFromBitmapData(bitmap, 0);
+			_data.dispose();
+			_data = bitmap;
+		}
+		
 		override public function upload(context3D:Context3D):void
 		{
 			_context3D = context3D;
@@ -65,7 +78,7 @@ package info.smoche.alternativa
 				_data = flipImage(_data);
 				_flipH = false;
 			}
-			_texture = context3D.createTexture(_data.width, _data.height, Context3DTextureFormat.BGRA, false);
+			_texture = context3D.createTexture(_data.width, _data.height, Context3DTextureFormat.BGRA, true);
 			Texture(_texture).uploadFromBitmapData(_data, 0);
 		}
 		
@@ -79,15 +92,20 @@ package info.smoche.alternativa
 			if (wLog2 != wLog2Num || hLog2 != hLog2Num || wLog2 > 11 || hLog2 > 11) {
 				wLog2 = (wLog2 > MAX_SIZE) ? MAX_SIZE : wLog2;
 				hLog2 = (hLog2 > MAX_SIZE) ? MAX_SIZE : hLog2;
-				var bitmap:BitmapData = new BitmapData(1 << wLog2, 1 << hLog2, source.transparent, 0);
-				const mat:Matrix = new Matrix(1, 0, 0, 1);
-				mat.a = (1 << wLog2)/source.width;
-				mat.d = (1 << hLog2)/source.height;
-				bitmap.draw(source, mat, null, null, null, true);
-				source.dispose();
-				return bitmap;
+				return resizeImage(source, 1 << wLog2, 1 << hLog2);
 			}
 			return source;
+		}
+		
+		static public function resizeImage(source:BitmapData, width:Number, height:Number):BitmapData
+		{
+			var bitmap:BitmapData = new BitmapData(width, height, source.transparent, 0);
+			const mat:Matrix = new Matrix(1, 0, 0, 1);
+			mat.a = width/source.width;
+			mat.d = height/source.height;
+			bitmap.draw(source, mat, null, null, null, true);
+			source.dispose();
+			return bitmap;
 		}
 		
 		static public function flipImage(source:BitmapData):BitmapData

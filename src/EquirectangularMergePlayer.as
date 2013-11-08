@@ -5,23 +5,14 @@ package
 	import alternativa.engine3d.objects.Mesh;
 	import alternativa.engine3d.primitives.GeoSphere;
 	import alternativa.engine3d.resources.TextureResource;
-	import flash.display.Bitmap;
 	import flash.display.BitmapData;
-	import flash.display.Graphics;
-	import flash.display.Shape;
 	import flash.display.Sprite;
 	import flash.display3D.Context3D;
 	import flash.display3D.Context3DBlendFactor;
 	import flash.display3D.Context3DClearMask;
-	import flash.display3D.IndexBuffer3D;
-	import flash.display3D.textures.TextureBase;
-	import flash.display3D.VertexBuffer3D;
-	import flash.events.KeyboardEvent;
+	import flash.events.Event;
 	import flash.external.ExternalInterface;
-	import flash.geom.Matrix;
-	import flash.geom.Matrix3D;
 	import flash.geom.Point;
-	import flash.geom.Vector3D;
 	import flash.utils.Dictionary;
 	import info.smoche.alternativa.BitmapTextureResourceLoader;
 	import info.smoche.alternativa.NonMipmapBitmapTextureResource;
@@ -35,11 +26,12 @@ package
 	 */
 	public class EquirectangularMergePlayer extends EquirectangularPlayer 
 	{
-		protected var _baseBitmap:BitmapData = new BitmapData(1, 1, false, 0);
-		protected var _paintBitmap:BitmapData = new BitmapData(1, 1, false, 0);
-		protected var _maskTexture:Vector.<NonMipmapBitmapTextureResource>;
-		protected var _maskIndex:uint = 0;
-		protected var _mergeMaterial:MergeTextureMaterial;
+		protected var _baseBitmap:BitmapData;
+		protected var _paintBitmap:BitmapData;
+		protected var _renderTexture:NonMipmapBitmapTextureResource;
+		protected var _baseTexture:NonMipmapBitmapTextureResource;
+		protected var _paintTexture:NonMipmapBitmapTextureResource;
+		protected var _paintMaterial:PaintTextureMaterial;
 		protected var _beginPaint:Boolean = false;
 		protected var _painting:Boolean = false;
 		
@@ -69,50 +61,47 @@ package
 		protected var _brush:AGALGeometry;
 		protected var _copyBrush:AGALGeometry;
 		protected var _brushProgram:AGALProgram;
-		protected var _copyProgram:AGALProgram;
 		protected function initBrush():void
 		{
 			var ctx:Context3D = _stage3D.context3D;
 			
 			var verts:Vector.<Number> = Vector.<Number>([
-			//     x,    y,  z,	u, v
-				-0.1, -0.05, 0,	0, 0,
-				 0.1, -0.05, 0,	1, 0,
-				 0.1,  0.05, 0,	1, 1,
-				-0.1,  0.05, 0,	0, 1,
+			//  x,       y,     z,
+				-0.01/2, -0.01, 0,
+				 0.01/2, -0.01, 0,
+				 0.01/2,  0.01, 0,
+				-0.01/2,  0.01, 0,
 			]);
 			var indexes:Vector.<uint> = Vector.<uint>([
 				0, 1, 2,
 				0, 2, 3,
 			]);
-			_brush = new AGALGeometry(ctx, verts, indexes);
-			_brushProgram = new AGALProgram(ctx, [
-				"#position=0",
-				"add op, va0, vc0",
-			], [
-				"#color=0",
-				"mov oc, fc0",
-			]);
+			_brush = new AGALGeometry(ctx, verts, indexes, false);
 			
 			verts = Vector.<Number>([
-			//   x,  y, z,	u, v
-				-1, -1, 0,	0, 0,
-				 1, -1, 0,	1, 0,
-				 1,  0, 0,	1, 1,
-				-1,  0, 0,	0, 1,
+			//  x, y, z,
+				0, 0, 0,
+				1, 0, 0,
+				1, 1, 0,
+				0, 1, 0,
 			]);
-			indexes = Vector.<uint>([
-				0, 1, 2,
-				0, 2, 3,
-			]);
-			_copyBrush = new AGALGeometry(ctx, verts, indexes);
-			_copyProgram = new AGALProgram(ctx, [
-				"#position=0",
-				"add op, va0, vc0",
-				"mov v0, va1",
+			_copyBrush = new AGALGeometry(ctx, verts, indexes, false);
+			
+			_brushProgram = new AGALProgram(ctx, [
+				"#texcel=0",
+				"#make_uv=1", 			// [1, 1]
+				// uv = (1 - (vert + texcel))
+				"add vt0, va0, vc0",
+				"sub vt0.xy, vc1.xy, vt0.xy",
+				"mov v0, vt0",
+				// xy = (vert + texcel - 0.5)*2
+				"#make_pos=2", 			// [0.5, 0.5, 2]
+				"add vt0, va0, vc0",
+				"sub vt0.xy, vt0.xy, vc2.xy",
+				"mul vt0.xy, vt0.xy, vc2.z",
+				"mov op, vt0",
 			], [
 				"#texture=0",
-				"#color=0",
 				"tex oc, v0, fs0 <2d,linear,repeat>",
 			]);
 		}
@@ -126,51 +115,51 @@ package
 			return new Point(yaw, pitch);
 		}
 		
-		protected function paintMask(e:MouseEvent3D):void
+		protected function paintBrush(e:MouseEvent3D):void
 		{
-			if (!_painting || !e.shiftKey) return;
+			if (!_painting || (!e.shiftKey && !e.ctrlKey)) return;
+			
 			var texel:Point = mouseEvent3DToTexcel(e);
-			
-			var ctx:Context3D;
-			
-			var prog:AGALProgram = _copyProgram;
+			var prog:AGALProgram = _brushProgram;
 			prog.context(function(ctx:Context3D):void {
-				ctx.setRenderToTexture(_maskTexture[_maskIndex].texture());
+				ctx.setRenderToTexture(_renderTexture.texture());
 				ctx.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ZERO);
 				ctx.clear(0, 0, 0, 0, 1, 0, Context3DClearMask.DEPTH|Context3DClearMask.STENCIL);
 				
-				prog.setTexture("texture", _maskTexture[1 - _maskIndex].texture());
-				prog.setNumbers("position", 1 - texel.x * 2, 1 - texel.y * 2, 0, 0);
-				prog.setNumbers("color", 1, 0, 0, 0);
+				prog.setTexture("texture", ((e.shiftKey)? _paintTexture: _baseTexture).texture());
+				prog.setNumbers("texcel", 1 - texel.x, 1 - texel.y, 0, 0);
+				prog.setNumbers("make_uv",  1, 1);
+				prog.setNumbers("make_pos", 0.5, 0.5, 2);
 				prog.drawGeometry(_brush);
 				
 				ctx.setRenderToBackBuffer();
 			});
+		}
+		
+		protected function loadRenderTextureOnce(e:Event):void
+		{
+			_parent.removeEventListener(Event.ENTER_FRAME, loadRenderTextureOnce);
+			reloadRenderTexture();
+		}
+		
+		protected function reloadRenderTexture():void
+		{
+			var prog:AGALProgram = _brushProgram;
+			prog.context(function(ctx:Context3D):void {
+				ctx.setRenderToTexture(_renderTexture.texture());
+				ctx.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ZERO);
+				ctx.clear(0, 0, 0, 0, 1, 0, Context3DClearMask.DEPTH|Context3DClearMask.STENCIL);
+				
+				prog.setTexture("texture", _baseTexture.texture());
+				prog.setNumbers("texcel", 0, 0);
+				prog.setNumbers("make_uv",  1, 1);
+				prog.setNumbers("make_pos", 0.5, 0.5, 2);
+				prog.drawGeometry(_copyBrush);
+				
+				ctx.setRenderToBackBuffer();
+			});
 			
-			//_copyProgram.context(function(ctx:Context3D):void {
-				//ctx.setRenderToTexture(_maskTexture[_maskIndex].texture());
-				//ctx.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ZERO);
-				//ctx.clear(0, 0, 0, 0, 1, 0, Context3DClearMask.DEPTH|Context3DClearMask.STENCIL);
-				//
-				//_copyProgram.setNumbers("position", 1 - texel.x * 2, 1 - texel.y * 2, 0, 0);
-				//_copyProgram.setNumbers("color", 1, 0, 0, 0);
-				//ctx.setTextureAt(0, _maskTexture[1].texture());
-				//_copyProgram.drawGeometry(_brush);
-				//
-				//ctx.setRenderToBackBuffer();
-			//})
-			
-			//_brushProgram.context(function(ctx:Context3D):void {
-				//ctx.setRenderToTexture(_maskTexture[_maskIndex].texture());
-				//ctx.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ZERO);
-				//ctx.clear(0, 0, 0, 0, 1, 0, Context3DClearMask.DEPTH|Context3DClearMask.STENCIL);
-				//
-				//_brushProgram.setNumbers("position", 1 - texel.x * 2, 1 - texel.y * 2, 0, 0);
-				//_brushProgram.setNumbers("color", 1, 0, 0, 0);
-				//_brushProgram.drawGeometry(_brush);
-				//
-				//ctx.setRenderToBackBuffer();
-			//});
+			trace("reloaded.");
 		}
 		
 		protected function startPaint(e:MouseEvent3D):void
@@ -178,7 +167,7 @@ package
 			_painting = true;
 			if (e.shiftKey || e.ctrlKey || e.altKey) {
 				_controller.disable();
-				paintMask(e);
+				paintBrush(e);
 			}
 		}
 		protected function endPaint(e:MouseEvent3D):void
@@ -187,22 +176,25 @@ package
 			_controller.enable();
 		}
 		
-		protected function applyTextures():void
+		protected function setupMaterial():void
 		{
-			var baseTexture:NonMipmapBitmapTextureResource = new NonMipmapBitmapTextureResource(_baseBitmap.clone(), true);
-			var paintTexture:NonMipmapBitmapTextureResource = new NonMipmapBitmapTextureResource(_paintBitmap.clone(), true);
-			_maskTexture = Vector.<NonMipmapBitmapTextureResource>([
-				new NonMipmapBitmapTextureResource(new BitmapData(256, 256, false, 0)),
-				new NonMipmapBitmapTextureResource(new BitmapData(256, 256, false, 0x800000)),
-			]);
-			_mergeMaterial = new MergeTextureMaterial(baseTexture, paintTexture, Vector.<TextureResource>(_maskTexture), _stage3D.context3D);
-			_worldMesh.mesh().setMaterialToAllSurfaces(_mergeMaterial);
+			trace("setup material.");
+			_renderTexture = new NonMipmapBitmapTextureResource(new BitmapData(_baseBitmap.width, _baseBitmap.height, false, 0));
+			_baseTexture = new NonMipmapBitmapTextureResource(_baseBitmap.clone());
+			_paintTexture = new NonMipmapBitmapTextureResource(_paintBitmap.clone());
+			_paintMaterial = new PaintTextureMaterial(
+									_renderTexture,
+									Vector.<TextureResource>([_baseTexture, _paintTexture]),
+									_stage3D.context3D);
+			_worldMesh.mesh().setMaterialToAllSurfaces(_paintMaterial);
 			uploadResources();
+			_parent.addEventListener(Event.ENTER_FRAME, loadRenderTextureOnce);
+			
 			if (!_beginPaint) {
 				_beginPaint = true;
 				var m:Mesh = _worldMesh.mesh();
 				m.addEventListener(MouseEvent3D.MOUSE_DOWN, startPaint);
-				m.addEventListener(MouseEvent3D.MOUSE_MOVE, paintMask);
+				m.addEventListener(MouseEvent3D.MOUSE_MOVE, paintBrush);
 				m.addEventListener(MouseEvent3D.MOUSE_UP, endPaint);
 				m.addEventListener(MouseEvent3D.MOUSE_OUT, endPaint);
 				m.addEventListener(MouseEvent3D.MOUSE_OVER, endPaint);
@@ -211,17 +203,17 @@ package
 		
 		override protected function applyBitmapToTexture(bitmap:BitmapData):void 
 		{
-			_baseBitmap.dispose();
+			if (_baseBitmap) _baseBitmap.dispose();
 			_baseBitmap = bitmap;
-			applyTextures();
+			if (_paintBitmap) setupMaterial();
 		}
 		
 		public function load2(url:String, yaw_offset:Number):void
 		{
 			BitmapTextureResourceLoader.loadBitmapFromURL(url, function(bitmap:BitmapData):void {
-				_paintBitmap.dispose();
+				if (_paintBitmap) _paintBitmap.dispose();
 				_paintBitmap = bitmap;
-				applyTextures();
+				if (_baseBitmap) setupMaterial();
 				var js:String = _options["onLoadImageCompleted"];
 				if (ExternalInterface.available && js) {
 					ExternalInterface.call(js, url);
