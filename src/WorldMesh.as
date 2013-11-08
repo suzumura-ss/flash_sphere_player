@@ -1,4 +1,4 @@
-package  
+package
 {
 	import alternativa.engine3d.objects.Mesh;
 	import alternativa.engine3d.primitives.GeoSphere;
@@ -20,7 +20,7 @@ package
 		protected var _option:Dictionary;
 		protected var _material:NonMipmapTextureMaterial;
 		
-		public function WorldMesh(option:Dictionary = null) 
+		public function WorldMesh(option:Dictionary = null)
 		{
 			_option = option || new Dictionary();
 		}

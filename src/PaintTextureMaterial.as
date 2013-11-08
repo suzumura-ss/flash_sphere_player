@@ -1,10 +1,8 @@
 package  
 {
 	import alternativa.engine3d.alternativa3d;
-	import alternativa.engine3d.core.DrawUnit;
 	import alternativa.engine3d.resources.TextureResource;
 	import flash.display3D.Context3D;
-	import flash.display3D.Context3DBlendFactor;
 	import flash.utils.Dictionary;
 	import info.smoche.alternativa.NonMipmapTextureMaterial;
 	

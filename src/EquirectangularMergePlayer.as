@@ -1,24 +1,40 @@
 package  
 {
+	import alternativa.engine3d.core.events.Event3D;
 	import alternativa.engine3d.core.events.MouseEvent3D;
 	import alternativa.engine3d.materials.FillMaterial;
 	import alternativa.engine3d.objects.Mesh;
 	import alternativa.engine3d.primitives.GeoSphere;
 	import alternativa.engine3d.resources.TextureResource;
+	import com.adobe.air.filesystem.FileUtil;
+	import com.adobe.images.JPGEncoder;
+	import com.sitedaniel.view.components.LoadIndicator;
+	import flash.display.Bitmap;
 	import flash.display.BitmapData;
+	import flash.display.Loader;
+	import flash.display.SimpleButton;
 	import flash.display.Sprite;
 	import flash.display3D.Context3D;
 	import flash.display3D.Context3DBlendFactor;
 	import flash.display3D.Context3DClearMask;
 	import flash.events.Event;
+	import flash.events.IOErrorEvent;
+	import flash.events.MouseEvent;
+	import flash.events.TimerEvent;
 	import flash.external.ExternalInterface;
 	import flash.geom.Point;
+	import flash.net.FileFilter;
+	import flash.net.FileReference;
+	import flash.text.TextField;
+	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
+	import flash.utils.Timer;
 	import info.smoche.alternativa.BitmapTextureResourceLoader;
 	import info.smoche.alternativa.NonMipmapBitmapTextureResource;
 	import info.smoche.stage3d.AGALGeometry;
 	import info.smoche.stage3d.AGALProgram;
 	import info.smoche.utils.Utils;
+	import mx.core.FlexSimpleButton;
 	
 	/*
 	 * 
@@ -31,20 +47,44 @@ package
 		protected var _renderTexture:NonMipmapBitmapTextureResource;
 		protected var _baseTexture:NonMipmapBitmapTextureResource;
 		protected var _paintTexture:NonMipmapBitmapTextureResource;
+		protected var _resultTexture:NonMipmapBitmapTextureResource;
 		protected var _paintMaterial:PaintTextureMaterial;
 		protected var _beginPaint:Boolean = false;
 		protected var _painting:Boolean = false;
 		
+		[Embed(source = "Floppy.png")] protected static const FLOPPY_N:Class;
+		[Embed(source = "Floppy_a.png")] protected static const FLOPPY_A:Class;
+		[Embed(source = "Folder.png")] protected static const FOLDER_N:Class;
+		[Embed(source = "Folder_a.png")] protected static const FOLDER_A:Class;
+		[Embed(source = "Folder_Open.png")] protected static const FOLDER_OPEN_N:Class;
+		[Embed(source = "Folder_Open_a.png")] protected static const FOLDER_OPEN_A:Class;
+		
 		public function EquirectangularMergePlayer(width_:Number, height_:Number, parent:Sprite, options:Dictionary = null):void
 		{
 			super(width_, height_, parent, options);
-			
 			initBrush();
 			
-			var m:Mesh = new GeoSphere(10);
-			m.setMaterialToAllSurfaces(new FillMaterial(0xff8080));
-			m.x = 800;
-			_rootContainer.addChild(m);
+			var bmp0:Bitmap = new FOLDER_N() as Bitmap;
+			var bmp1:Bitmap = new FOLDER_A() as Bitmap;
+			var button:SimpleButton = new SimpleButton(bmp0, bmp0, bmp1, bmp0);
+			button.addEventListener(MouseEvent.CLICK, function(e:Event):void {
+				loadImageFor(function(bitmap:BitmapData):void {
+					var base:BitmapData = bitmap;
+					loadImageFor(function(bitmap:BitmapData):void {
+						applyBitmapToTexture(base);
+						applyBitmapToPaint(bitmap);
+					});
+				});
+			});
+			_parent.addChild(button);
+			
+			_parent.addChild(button);
+			bmp0 = new FLOPPY_N() as Bitmap;
+			bmp1 = new FLOPPY_A() as Bitmap;
+			button = new SimpleButton(bmp0, bmp0, bmp1, bmp0);
+			button.x = button.width;
+			button.addEventListener(MouseEvent.CLICK, onSaveImage);
+			_parent.addChild(button);
 			
 			// Setup Javascrit interfaces
 			if (ExternalInterface.available) {
@@ -56,6 +96,51 @@ package
 					Utils.Trace(x);
 				}
 			}
+		}
+		
+		protected function loadImageFor(callback:Function):void
+		{
+			var fr:FileReference = new FileReference();
+			fr.addEventListener(Event.COMPLETE, function(e:Event):void {
+				var loader:Loader = new Loader();
+				loader.contentLoaderInfo.addEventListener(Event.COMPLETE, function(e:Event):void {
+					try {
+						var bitmap:BitmapData = (e.target.content as Bitmap).bitmapData;
+						callback(bitmap);
+					} catch (e:SecurityError) {
+						Utils.Trace(e);
+					}
+				});
+				loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function(e:IOErrorEvent):void {
+					Utils.Trace(e);
+				});
+				loader.loadBytes(fr.data);
+			});
+			fr.addEventListener(Event.SELECT, function(e:Event):void {
+				fr.load();
+			});
+			fr.browse([new FileFilter("Image(*.jpg,*.png)", "*.jpg;*.png")]);
+		}
+		
+		protected function onSaveImage(e:Event):void
+		{
+			var w:Number = _parent.stage.stageWidth;
+			var h:Number = _parent.stage.stageHeight;
+			_indicator = new LoadIndicator(_parent, w / 2, h / 2, w / 4, 30, w / 6, 4, 0xffffff, 2);
+			var timer:Timer = new Timer(200, 1);
+			timer.addEventListener(TimerEvent.TIMER_COMPLETE, function(e:TimerEvent):void {
+				var jpeg:JPGEncoder = new JPGEncoder(90);
+				var bytes:ByteArray = jpeg.encode(textureToImage());
+				var fr:FileReference = new FileReference();
+				var fin:Function = function(e:Event):void {
+					_indicator.destroy();
+					_indicator = null;
+				};
+				fr.addEventListener(Event.COMPLETE, fin);
+				fr.addEventListener(Event.CANCEL, fin);
+				fr.save(bytes, "Equirectangular.jpg");
+			});
+			timer.start();
 		}
 		
 		protected var _brush:AGALGeometry;
@@ -170,7 +255,7 @@ package
 			prog.context(function(ctx:Context3D):void {
 				ctx.setRenderToTexture(_renderTexture.texture());
 				ctx.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ZERO);
-				ctx.clear(0, 0, 0, 0, 1, 0, Context3DClearMask.DEPTH|Context3DClearMask.STENCIL);
+				ctx.clear(0, 0, 0, 0);
 				
 				prog.setTexture("texture", _baseTexture.texture());
 				prog.setNumbers("make_uv", 1, 1, 1, 1);
@@ -180,8 +265,27 @@ package
 				
 				ctx.setRenderToBackBuffer();
 			});
-			
-			trace("reloaded.");
+		}
+		
+		protected function textureToImage():BitmapData
+		{
+			var result:BitmapData = new BitmapData(_baseBitmap.width, _baseBitmap.height, false, 0);
+			var prog:AGALProgram = _brushProgram;
+			prog.context(function(ctx:Context3D):void {
+				ctx.configureBackBuffer(_baseBitmap.width, _baseBitmap.height, 4);
+				ctx.setRenderToBackBuffer();
+				ctx.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ZERO);
+				ctx.clear(0, 0, 0, 0);
+				prog.setTexture("texture", _renderTexture.texture());
+				prog.setNumbers("make_uv", 1, 1, 1, 1);
+				prog.setNumbers("make_pos", 0.5, 0.5, 2);
+				prog.setNumbers("texcel", 0, 0);
+				prog.drawGeometry(_copyBrush);
+				ctx.drawToBitmapData(result);
+				
+				ctx.configureBackBuffer(_parent.stage.stageWidth, _parent.stage.stageHeight, 4);
+			});
+			return result;
 		}
 		
 		protected function startPaint(e:MouseEvent3D):void
@@ -200,13 +304,14 @@ package
 		
 		protected function setupMaterial():void
 		{
-			trace("setup material.");
-			_renderTexture = new NonMipmapBitmapTextureResource(new BitmapData(_baseBitmap.width, _baseBitmap.height, false, 0));
+			var stub:BitmapData = new BitmapData(_baseBitmap.width, _baseBitmap.height, false, 0);
+			_renderTexture = new NonMipmapBitmapTextureResource(stub.clone());
 			_baseTexture = new NonMipmapBitmapTextureResource(_baseBitmap.clone());
 			_paintTexture = new NonMipmapBitmapTextureResource(_paintBitmap.clone());
+			_resultTexture = new NonMipmapBitmapTextureResource(stub);
 			_paintMaterial = new PaintTextureMaterial(
 									_renderTexture,
-									Vector.<TextureResource>([_baseTexture, _paintTexture]),
+									Vector.<TextureResource>([_baseTexture, _paintTexture, _resultTexture]),
 									_stage3D.context3D);
 			_worldMesh.mesh().setMaterialToAllSurfaces(_paintMaterial);
 			uploadResources();
@@ -230,12 +335,17 @@ package
 			if (_paintBitmap) setupMaterial();
 		}
 		
+		protected function applyBitmapToPaint(bitmap:BitmapData):void
+		{
+			if (_paintBitmap) _paintBitmap.dispose();
+			_paintBitmap = bitmap;
+			if (_baseBitmap) setupMaterial();
+		}
+		
 		public function load2(url:String, yaw_offset:Number):void
 		{
 			BitmapTextureResourceLoader.loadBitmapFromURL(url, function(bitmap:BitmapData):void {
-				if (_paintBitmap) _paintBitmap.dispose();
-				_paintBitmap = bitmap;
-				if (_baseBitmap) setupMaterial();
+				applyBitmapToPaint(bitmap);
 				var js:String = _options["onLoadImageCompleted"];
 				if (ExternalInterface.available && js) {
 					ExternalInterface.call(js, url);

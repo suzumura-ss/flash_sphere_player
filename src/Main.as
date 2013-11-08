@@ -42,7 +42,7 @@ package
 			
 			var htmlParams:Object = LoaderInfo(root.loaderInfo).parameters;
 			var sourceUrl:String = htmlParams["source"] || "forest.jpg";
-			var playerMode:String = htmlParams["mode"] || "sphere_merge";
+			var playerMode:String = htmlParams["mode"] || "sphere_walker";
 			var opt:Dictionary = new Dictionary();
 			opt["showDiagram"] = (htmlParams["showDiagram"]=="true") || true;
 			opt["hideLogo"] = (htmlParams["hideLogo"] == "true") || false;
