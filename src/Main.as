@@ -76,6 +76,8 @@ package
 			}
 			_player.load(sourceUrl, yaw_offset);
 			_player.rotate(y, p);
+			
+			var tilt:TiltFilter = new TiltFilter(_stage3D.context3D);
 		}
 	}
 }
