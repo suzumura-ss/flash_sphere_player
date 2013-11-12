@@ -22,6 +22,7 @@ package
 		protected var _current:Number;
 		
 		public var onChanged:Function = function(value:Number):void {}
+		public var onEditEnd:Function = function():void {}
 		
 		public function FlatSlider(min:Number, max:Number, init:Number, width:Number, controller:SimpleObjectController)
 		{
@@ -43,7 +44,7 @@ package
 			addChild(button);
 			
 			var label:TextField = new TextField();
-			label.text = "0.0";
+			label.text = "0.00";
 			label.width = 50;
 			label.height = 20;
 			label.x = (line.width - label.width) / 2;
@@ -52,8 +53,8 @@ package
 			addChild(label);
 			
 			var update:Function = function():void {
-				label.text = _current.toFixed(1);
-				button.x = (_current - _min) * (_max - _min) / _width;
+				label.text = _current.toFixed(2);
+				button.x = (_current - _min) * _width / (_max - _min);
 			}
 			update();
 			
@@ -61,7 +62,7 @@ package
 			var e:MouseEvent;
 			var move:Function = function(e:MouseEvent):void {
 				if (dragging) {
-					var v:Number = (e.localX - button.width / 2) * _width / (_max - _min) + _min;
+					var v:Number = (e.localX - button.width / 2) * (_max - _min) / _width + _min;
 					if (v < _min) {
 						v = _min;
 					} else if (v > _max) {
@@ -80,6 +81,7 @@ package
 			var end:Function = function(e:MouseEvent):void {
 				dragging = false;
 				controller.enable();
+				onEditEnd();
 			}
 			line.addEventListener(MouseEvent.MOUSE_DOWN, start);
 			line.addEventListener(MouseEvent.MOUSE_MOVE, move);

@@ -2,6 +2,7 @@ package
 {
 	import alternativa.engine3d.core.events.MouseEvent3D;
 	import alternativa.engine3d.objects.Mesh;
+	import alternativa.engine3d.primitives.GeoSphere;
 	import alternativa.engine3d.primitives.Plane;
 	import alternativa.engine3d.resources.TextureResource;
 	import com.adobe.images.JPGEncoder;
@@ -32,6 +33,7 @@ package
 	import info.smoche.alternativa.BitmapTextureResourceLoader;
 	import info.smoche.alternativa.NonMipmapBitmapTextureResource;
 	import info.smoche.alternativa.NonMipmapTextureMaterial;
+	import info.smoche.alternativa.RenderTextureResource;
 	import info.smoche.stage3d.AGALGeometry;
 	import info.smoche.stage3d.AGALProgram;
 	import info.smoche.utils.Utils;
@@ -52,6 +54,8 @@ package
 		protected var _beginPaint:Boolean = false;
 		protected var _painting:Boolean = false;
 		
+		protected var _adjustMaterial:AdjustTextuteMaterial;
+		protected var _adjustMesh:Mesh;
 		protected var _adjusting:Boolean = false;
 		protected var _adjust_yaw:Number = 0;
 		
@@ -183,12 +187,18 @@ package
 		
 		protected function initAdjustUI():void
 		{
-			var slider:FlatSlider = new FlatSlider( -90, 90, 0, 180, _controller);
+			var slider:FlatSlider = new FlatSlider( -10, 10, 0, 480, _controller);
 			slider.y = 64;
 			_parent.addChild(slider);
 			slider.onChanged = function(value:Number):void {
-				_adjust_yaw = value;
-				//tilt(0, _adjust_yaw);
+				_adjust_yaw = -value / 180;
+				_adjustMaterial.yaw_offset = _adjust_yaw;
+				_worldMesh.mesh().visible = false;
+				if (_adjustMesh) _adjustMesh.visible = true;
+			}
+			slider.onEditEnd = function():void {
+				_worldMesh.mesh().visible = true;
+				if (_adjustMesh) _adjustMesh.visible = false;
 			}
 		}
 		
@@ -322,7 +332,9 @@ package
 				"mov op, vt0",
 			], [
 				"#texture=0",
-				"tex oc, v0, fs0 <2d,linear,repeat>",
+				"#offset=0",
+				"add ft0, v0, fc0",
+				"tex oc, ft0, fs0 <2d,linear,repeat>",
 			]);
 		}
 		
@@ -355,6 +367,7 @@ package
 				prog.setNumbers("make_uv",  1, 1, x_mag, y_mag);
 				prog.setNumbers("make_pos", 0.5, 0.5, 2);
 				prog.setNumbers("texcel", 1 - texel.x, 1 - texel.y, 0, 0);
+				prog.setNumbers("offset", (e.shiftKey)? _adjust_yaw:0);
 				prog.drawGeometry(_brush);
 				
 				ctx.setRenderToBackBuffer();
@@ -434,6 +447,12 @@ package
 									Vector.<TextureResource>([_baseTexture, _paintTexture, _resultTexture]),
 									_stage3D.context3D);
 			_worldMesh.mesh().setMaterialToAllSurfaces(_paintMaterial);
+			
+			_adjustMaterial = new AdjustTextuteMaterial(_renderTexture, _paintTexture, 0.5, _stage3D.context3D);
+			_adjustMesh = new GeoSphere(800, 8, true, _adjustMaterial);
+			_adjustMesh.visible = false;
+			_rootContainer.addChild(_adjustMesh);
+			
 			uploadResources();
 			_parent.addEventListener(Event.ENTER_FRAME, loadRenderTextureOnce);
 			
