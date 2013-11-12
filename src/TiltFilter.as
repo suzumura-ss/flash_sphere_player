@@ -1,11 +1,15 @@
 package  
 {
 	import flash.display.Bitmap;
+	import flash.display.BitmapData;
 	import flash.display3D.Context3D;
+	import flash.display3D.Context3DClearMask;
 	import flash.display3D.Context3DTextureFormat;
 	import flash.display3D.textures.Texture;
+	import flash.display3D.textures.TextureBase;
 	import flash.geom.Matrix3D;
 	import flash.geom.Vector3D;
+	import info.smoche.stage3d.AGALGeometry;
 	import info.smoche.stage3d.AGALProgram;
 	import info.smoche.utils.Utils;
 	/**
@@ -16,6 +20,7 @@ package
 	{
 		protected var _context3D:Context3D;
 		protected var _agalProgram:AGALProgram;
+		protected var _mesh:AGALGeometry;
 		protected var _mathTable:Texture;
 		protected var _tiltMatrix:Matrix3D;
 		protected var _yaw_rad:Number;
@@ -27,6 +32,39 @@ package
 		{
 			_context3D = context3D;
 			loadProgram();
+			loadMesh();
+		}
+		
+		public function applyFilter(source:TextureBase, result:TextureBase):void
+		{
+			var ctx:Context3D;
+			_agalProgram.context(function(ctx:Context3D):void {
+				_agalProgram.setTexture("texture", source);
+				_agalProgram.setTexture("tex_math", _mathTable);
+				_agalProgram.setNumbers("M_PI", Math.PI / 2, Math.PI, Math.PI * 2);
+				_agalProgram.setNumbers("ONE", 1, 2, 256);
+				_agalProgram.setMatrix3D("TILT", _tiltMatrix);
+				
+				ctx.setRenderToTexture(result);
+				ctx.clear();
+				_agalProgram.drawGeometry(_mesh);
+				
+				ctx.setRenderToBackBuffer();
+			});
+		}
+		
+		public function applyFilterToBitmap(source:TextureBase, result:BitmapData):void
+		{
+			var dstTexture:Texture = _context3D.createTexture(result.width, result.height, Context3DTextureFormat.BGRA, true);
+			
+			applyFilter(source, dstTexture);
+			_context3D.configureBackBuffer(result.width, result.height, 4);
+			_context3D.setRenderToTexture(dstTexture);
+			_context3D.clear(0, 0, 0, 0, 1, 0, Context3DClearMask.DEPTH);
+			_context3D.drawToBitmapData(result);
+			_context3D.setRenderToBackBuffer();
+			
+			dstTexture.dispose();
 		}
 		
 		public function setCompass(yaw_deg:Number, pitch_deg:Number, roll_deg:Number):void
@@ -55,7 +93,7 @@ package
 				"#tex_math=1",	// fs1: [R,G]=atan2(x,z), [B,A]=asin(y)
 				"#M_PI=0",		// fc0: [M_PI2=PI/2, M_PI, M_2PI=PI*2]
 				"#ONE=1",		// fc1: [1.0, 2.0, 256.0]
-				"#TILT=2",		// fc2-5: [_tiltMatrix/4x4] 
+				"#TILT=2",		// fc2-5: [_tiltMatrix/4x4]
 				
 				// highp float phi0[ft0.x]   = M_2PI * v_texcoord.x[v0.x];
 				"mul ft0.x, fc0.z, v0.x",
@@ -97,14 +135,31 @@ package
 				"add ft0.x, ft1.x, ft1.y",
 				"tex ft1, ft0.yw, fs1 <2d,clamp,linear>", 	// (b,a) = [B,A]asin(y),    fs2=asin(-PI/2<=u=PI/2), v=0
 				"mov ft0.y, ft1.z",							// y = b
+				"sub ft0.zw, ft0.zw, ft0.zw",
 				
 				// gl_FragColor[oc] = texture2D(texture[fs0], q[ft.0]);
-				"tex oc, ft0.xy, fs0 <2d,clamp,linear>",
+				"tex oc, ft0, fs0 <2d,clamp,linear>",
 			]);
 			
 			var math:Bitmap = new MATH() as Bitmap;
 			_mathTable = _context3D.createTexture(math.width, math.height, Context3DTextureFormat.BGRA, false);
 			_mathTable.uploadFromBitmapData(math.bitmapData, 0);
+		}
+		
+		protected function loadMesh():void
+		{
+			var verts:Vector.<Number> = Vector.<Number>([
+			//   x,  y, z,	u, v
+				-1, -1, 0,	0, 1,
+				 1, -1, 0,	1, 1,
+				 1,  1, 0,	1, 0,
+				-1,  1, 0,	0, 0,
+			]);
+			var indexes:Vector.<uint> = Vector.<uint>([
+				0, 1, 2,
+				0, 2, 3,
+			]);
+			_mesh = new AGALGeometry(_context3D, verts, indexes);
 		}
 	}
 }

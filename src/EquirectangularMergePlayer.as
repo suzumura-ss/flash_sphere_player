@@ -2,6 +2,7 @@ package
 {
 	import alternativa.engine3d.core.events.MouseEvent3D;
 	import alternativa.engine3d.objects.Mesh;
+	import alternativa.engine3d.primitives.Plane;
 	import alternativa.engine3d.resources.TextureResource;
 	import com.adobe.images.JPGEncoder;
 	import com.sitedaniel.view.components.LoadIndicator;
@@ -30,6 +31,7 @@ package
 	import flash.utils.Timer;
 	import info.smoche.alternativa.BitmapTextureResourceLoader;
 	import info.smoche.alternativa.NonMipmapBitmapTextureResource;
+	import info.smoche.alternativa.NonMipmapTextureMaterial;
 	import info.smoche.stage3d.AGALGeometry;
 	import info.smoche.stage3d.AGALProgram;
 	import info.smoche.utils.Utils;
@@ -62,8 +64,22 @@ package
 		[Embed(source = "resources/check.png")] protected static const CHECK:Class;
 		[Embed(source = "resources/brush.png")] protected static const BRUSH:Class;
 		[Embed(source = "resources/erase.png")] protected static const ERASE:Class;
-		[Embed(source = "resources/circle.png")] protected static const CIRCLE:Class;
 		
+		/* TiltFilter実験 */
+		//protected var _tilt:TiltFilter;
+		//protected var _tiltTexture:NonMipmapBitmapTextureResource;
+		//protected function tilt(pitch:Number, roll:Number):void
+		//{
+			//var ctx:Context3D = _stage3D.context3D;
+			//if (!_tilt) {
+				//_tilt = new TiltFilter(ctx);
+			//}
+			//
+			//_tilt.setCompass(0, 0, 0);
+			//_tilt.applyFilter(_baseTexture.texture(), _tiltTexture.texture());
+		//}
+		
+		protected var _plane:Plane;
 		public function EquirectangularMergePlayer(width_:Number, height_:Number, parent:Sprite, options:Dictionary = null):void
 		{
 			super(width_, height_, parent, options);
@@ -71,6 +87,16 @@ package
 			initMouseCursor();
 			initImageIoUI();
 			initAdjustUI();
+			
+			/* TiltFilter実験 */
+			//_tiltTexture = new NonMipmapBitmapTextureResource(new BitmapData(1024, 512, true, 0));
+			//_plane = new Plane(200, 100);
+			//_plane.setMaterialToAllSurfaces(new NonMipmapTextureMaterial(_tiltTexture, 1, _stage3D.context3D));
+			//_plane.rotationZ = Math.PI / 2;
+			//_plane.rotationX = Math.PI / 2;
+			//_plane.x = 300;
+			//_rootContainer.addChild(_plane);
+			//uploadResources();
 			
 			// Setup Javascrit interfaces
 			if (ExternalInterface.available) {
@@ -157,56 +183,12 @@ package
 		
 		protected function initAdjustUI():void
 		{
-			var bmp:Bitmap = new CIRCLE() as Bitmap;
-			var button:SimpleButton = new SimpleButton(bmp, bmp, bmp, bmp);
-			button.x = 0 + 90;
-			button.y = 64;
-			_parent.addChild(button);
-			
-			bmp = new Bitmap(new BitmapData(180+button.width, button.height, false, 0x86c351));
-			var line:SimpleButton = new SimpleButton(bmp, bmp, bmp, bmp);
-			line.alpha = 0.5;
-			line.y = button.y;
-			_parent.addChild(line);
-			
-			var label:TextField = new TextField();
-			label.text = "0.0";
-			label.width = 50;
-			label.height = 20;
-			label.x = (line.x + line.width - label.width) / 2;
-			label.y = line.y + (line.height - label.height) / 2;
-			label.mouseEnabled = false;
-			_parent.addChild(label);
-			
-			var e:MouseEvent;
-			var move:Function = function(e:MouseEvent):void {
-				if (_adjusting) {
-					var v:Number = e.localX - button.width / 2 - 90;
-					if (v < -90) {
-						v = -90;
-					} else if (v > 90) {
-						v = 90;
-					}
-					_adjust_yaw = v;
-					label.text = _adjust_yaw.toFixed(1);
-					button.x = v + 90;
-				}
-			}
-			var start:Function = function(e:MouseEvent):void {
-				_adjusting = true;
-				_controller.disable();
-				move(e);
-			}
-			var end:Function = function(e:MouseEvent):void {
-				_adjusting = false;
-				_controller.enable();
-			}
-			for each(var elm:SimpleButton in [line]) {
-				elm.addEventListener(MouseEvent.MOUSE_DOWN, start);
-				elm.addEventListener(MouseEvent.MOUSE_MOVE, move);
-				elm.addEventListener(MouseEvent.MOUSE_UP, end);
-				elm.addEventListener(MouseEvent.MOUSE_OUT, end);
-				elm.addEventListener(MouseEvent.MOUSE_OVER, end);
+			var slider:FlatSlider = new FlatSlider( -90, 90, 0, 180, _controller);
+			slider.y = 64;
+			_parent.addChild(slider);
+			slider.onChanged = function(value:Number):void {
+				_adjust_yaw = value;
+				//tilt(0, _adjust_yaw);
 			}
 		}
 		
