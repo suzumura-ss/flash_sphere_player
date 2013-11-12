@@ -50,6 +50,9 @@ package
 		protected var _beginPaint:Boolean = false;
 		protected var _painting:Boolean = false;
 		
+		protected var _adjusting:Boolean = false;
+		protected var _adjust_yaw:Number = 0;
+		
 		[Embed(source = "resources/Floppy.png")] protected static const FLOPPY_N:Class;
 		[Embed(source = "resources/Floppy_a.png")] protected static const FLOPPY_A:Class;
 		[Embed(source = "resources/Folder.png")] protected static const FOLDER_N:Class;
@@ -59,6 +62,7 @@ package
 		[Embed(source = "resources/check.png")] protected static const CHECK:Class;
 		[Embed(source = "resources/brush.png")] protected static const BRUSH:Class;
 		[Embed(source = "resources/erase.png")] protected static const ERASE:Class;
+		[Embed(source = "resources/circle.png")] protected static const CIRCLE:Class;
 		
 		public function EquirectangularMergePlayer(width_:Number, height_:Number, parent:Sprite, options:Dictionary = null):void
 		{
@@ -66,6 +70,7 @@ package
 			initBrush();
 			initMouseCursor();
 			initImageIoUI();
+			initAdjustUI();
 			
 			// Setup Javascrit interfaces
 			if (ExternalInterface.available) {
@@ -148,6 +153,61 @@ package
 			box.text = "1. Load image (1)\n2. Load image (2).\n3. Paint with SHIFT/ALT + mouse.\n4. Save it.";
 			box.x = button.width * 3;
 			_parent.addChild(box);
+		}
+		
+		protected function initAdjustUI():void
+		{
+			var bmp:Bitmap = new CIRCLE() as Bitmap;
+			var button:SimpleButton = new SimpleButton(bmp, bmp, bmp, bmp);
+			button.x = 0 + 90;
+			button.y = 64;
+			_parent.addChild(button);
+			
+			bmp = new Bitmap(new BitmapData(180+button.width, button.height, false, 0x86c351));
+			var line:SimpleButton = new SimpleButton(bmp, bmp, bmp, bmp);
+			line.alpha = 0.5;
+			line.y = button.y;
+			_parent.addChild(line);
+			
+			var label:TextField = new TextField();
+			label.text = "0.0";
+			label.width = 50;
+			label.height = 20;
+			label.x = (line.x + line.width - label.width) / 2;
+			label.y = line.y + (line.height - label.height) / 2;
+			label.mouseEnabled = false;
+			_parent.addChild(label);
+			
+			var e:MouseEvent;
+			var move:Function = function(e:MouseEvent):void {
+				if (_adjusting) {
+					var v:Number = e.localX - button.width / 2 - 90;
+					if (v < -90) {
+						v = -90;
+					} else if (v > 90) {
+						v = 90;
+					}
+					_adjust_yaw = v;
+					label.text = _adjust_yaw.toFixed(1);
+					button.x = v + 90;
+				}
+			}
+			var start:Function = function(e:MouseEvent):void {
+				_adjusting = true;
+				_controller.disable();
+				move(e);
+			}
+			var end:Function = function(e:MouseEvent):void {
+				_adjusting = false;
+				_controller.enable();
+			}
+			for each(var elm:SimpleButton in [line]) {
+				elm.addEventListener(MouseEvent.MOUSE_DOWN, start);
+				elm.addEventListener(MouseEvent.MOUSE_MOVE, move);
+				elm.addEventListener(MouseEvent.MOUSE_UP, end);
+				elm.addEventListener(MouseEvent.MOUSE_OUT, end);
+				elm.addEventListener(MouseEvent.MOUSE_OVER, end);
+			}
 		}
 		
 		protected function initMouseCursor():void
