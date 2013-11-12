@@ -88,7 +88,7 @@ package
 					ExternalInterface.addCallback("rotate", function(yaw:Number, pitch:Number):void {
 						rotate(Utils.to_rad(yaw), Utils.to_rad(pitch));
 					});
-					ExternalInterface.addCallback("load_image", function(sourceUrl:String, yaw_offset:Number):void {
+					ExternalInterface.addCallback("load_image", function(sourceUrl:String, yaw_offset:Number = 0):void {
 						load(sourceUrl, yaw_offset);
 					});
 				} catch (x:Error) {

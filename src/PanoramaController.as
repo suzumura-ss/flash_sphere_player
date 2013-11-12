@@ -5,6 +5,7 @@ package
 	import flash.display.InteractiveObject;
 	import flash.events.MouseEvent;
 	import flash.geom.Vector3D;
+	import flash.ui.Keyboard;
 	import flash.utils.Dictionary;
 	import info.smoche.utils.Utils;
 
@@ -37,6 +38,26 @@ package
 				eventSource.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
 			}
 			_camera.fov = Utils.to_rad(_angle);
+		}
+		
+		protected var _onShift:Function = super.moveUp;
+		public function onShift(callback:Function):void {
+			this.bindKey(Keyboard.SHIFT, SimpleObjectController.ACTION_UP);
+			_onShift = callback;
+		}
+		override public function moveUp(value:Boolean):void 
+		{
+			_onShift(value);
+		}
+		
+		protected var _onAlt:Function = super.moveDown;
+		public function onAlt(callback:Function):void {
+			this.bindKey(Keyboard.ALTERNATE, SimpleObjectController.ACTION_DOWN);
+			_onAlt = callback;
+		}
+		override public function moveDown(value:Boolean):void 
+		{
+			_onAlt(value);
 		}
 		
 		public function onMouseWheel(e:MouseEvent):void

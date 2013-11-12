@@ -1,12 +1,8 @@
 package  
 {
-	import alternativa.engine3d.core.events.Event3D;
 	import alternativa.engine3d.core.events.MouseEvent3D;
-	import alternativa.engine3d.materials.FillMaterial;
 	import alternativa.engine3d.objects.Mesh;
-	import alternativa.engine3d.primitives.GeoSphere;
 	import alternativa.engine3d.resources.TextureResource;
-	import com.adobe.air.filesystem.FileUtil;
 	import com.adobe.images.JPGEncoder;
 	import com.sitedaniel.view.components.LoadIndicator;
 	import flash.display.Bitmap;
@@ -26,6 +22,9 @@ package
 	import flash.net.FileFilter;
 	import flash.net.FileReference;
 	import flash.text.TextField;
+	import flash.ui.Mouse;
+	import flash.ui.MouseCursor;
+	import flash.ui.MouseCursorData;
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
 	import flash.utils.Timer;
@@ -34,7 +33,6 @@ package
 	import info.smoche.stage3d.AGALGeometry;
 	import info.smoche.stage3d.AGALProgram;
 	import info.smoche.utils.Utils;
-	import mx.core.FlexSimpleButton;
 	
 	/*
 	 * 
@@ -56,46 +54,122 @@ package
 		[Embed(source = "Floppy_a.png")] protected static const FLOPPY_A:Class;
 		[Embed(source = "Folder.png")] protected static const FOLDER_N:Class;
 		[Embed(source = "Folder_a.png")] protected static const FOLDER_A:Class;
-		[Embed(source = "Folder_Open.png")] protected static const FOLDER_OPEN_N:Class;
-		[Embed(source = "Folder_Open_a.png")] protected static const FOLDER_OPEN_A:Class;
+		[Embed(source = "Folder2.png")] protected static const FOLDER2_N:Class;
+		[Embed(source = "Folder2_a.png")] protected static const FOLDER2_A:Class;
+		[Embed(source = "check.png")] protected static const CHECK:Class;
+		[Embed(source = "brush.png")] protected static const BRUSH:Class;
+		[Embed(source = "erase.png")] protected static const ERASE:Class;
 		
 		public function EquirectangularMergePlayer(width_:Number, height_:Number, parent:Sprite, options:Dictionary = null):void
 		{
 			super(width_, height_, parent, options);
 			initBrush();
-			
-			var bmp0:Bitmap = new FOLDER_N() as Bitmap;
-			var bmp1:Bitmap = new FOLDER_A() as Bitmap;
-			var button:SimpleButton = new SimpleButton(bmp0, bmp0, bmp1, bmp0);
-			button.addEventListener(MouseEvent.CLICK, function(e:Event):void {
-				loadImageFor(function(bitmap:BitmapData):void {
-					var base:BitmapData = bitmap;
-					loadImageFor(function(bitmap:BitmapData):void {
-						applyBitmapToTexture(base);
-						applyBitmapToPaint(bitmap);
-					});
-				});
-			});
-			_parent.addChild(button);
-			
-			_parent.addChild(button);
-			bmp0 = new FLOPPY_N() as Bitmap;
-			bmp1 = new FLOPPY_A() as Bitmap;
-			button = new SimpleButton(bmp0, bmp0, bmp1, bmp0);
-			button.x = button.width;
-			button.addEventListener(MouseEvent.CLICK, onSaveImage);
-			_parent.addChild(button);
+			initMouseCursor();
+			initImageIoUI();
 			
 			// Setup Javascrit interfaces
 			if (ExternalInterface.available) {
 				try {
-					ExternalInterface.addCallback("load_paint_image", function(sourceUrl:String, yaw_offset:Number):void {
+					ExternalInterface.addCallback("load_paint_image", function(sourceUrl:String, yaw_offset:Number = 0):void {
 						load2(sourceUrl, yaw_offset);
 					});
 				} catch (x:Error) {
 					Utils.Trace(x);
 				}
 			}
+		}
+		
+		protected function initImageIoUI():void
+		{
+			var base:BitmapData = null;
+			var altb:BitmapData = null;
+			var checkBase:Bitmap = new CHECK() as Bitmap;
+			var checkAltb:Bitmap = new CHECK() as Bitmap;
+			
+			var onLoad:Function = function():void {
+				if (base && altb) {
+					var timer:Timer = new Timer(100, 1);
+					timer.addEventListener(TimerEvent.TIMER_COMPLETE, function(e:TimerEvent):void {
+						applyBitmapToTexture(base);
+						applyBitmapToPaint(altb);
+						base = altb = null;
+						checkBase.visible = checkAltb.visible = false;
+					});
+					timer.start();
+				}
+			}
+			
+			var bmp0:Bitmap = new FOLDER_N() as Bitmap;
+			var bmp1:Bitmap = new FOLDER_A() as Bitmap;
+			var button:SimpleButton = new SimpleButton(bmp0, bmp0, bmp1, bmp0);
+			button.addEventListener(MouseEvent.CLICK, function(e:Event):void {
+				loadImageFor(function(bitmap:BitmapData):void {
+					base = bitmap;
+					checkBase.visible = true;
+					onLoad();
+				});
+			});
+			_parent.addChild(button);
+			checkBase.visible  = false;
+			_parent.addChild(checkBase);
+			
+			bmp0 = new FOLDER2_N() as Bitmap;
+			bmp1 = new FOLDER2_A() as Bitmap;
+			button = new SimpleButton(bmp0, bmp0, bmp1, bmp0);
+			button.addEventListener(MouseEvent.CLICK, function(e:Event):void {
+				loadImageFor(function(bitmap:BitmapData):void {
+					altb = bitmap;
+					checkAltb.visible = true;
+					onLoad();
+				});
+			});
+			button.x = button.width;
+			_parent.addChild(button);
+			checkAltb.x = button.width;
+			checkAltb.visible  = false;
+			_parent.addChild(checkAltb);
+			
+			bmp0 = new FLOPPY_N() as Bitmap;
+			bmp1 = new FLOPPY_A() as Bitmap;
+			button = new SimpleButton(bmp0, bmp0, bmp1, bmp0);
+			button.addEventListener(MouseEvent.CLICK, onSaveImage);
+			button.x = button.width * 2;
+			_parent.addChild(button);
+			
+			var box:TextField = new TextField();
+			box.width = 200;
+			box.height = button.height;
+			box.wordWrap = true;
+			box.background = true;
+			box.backgroundColor = 0xc0c0c0;
+			box.border = true;
+			box.borderColor = 0x808080;
+			box.mouseEnabled = false;
+			box.text = "1. Load image (1)\n2. Load image (2).\n3. Paint with SHIFT/ALT + mouse.\n4. Save it.";
+			box.x = button.width * 3;
+			_parent.addChild(box);
+		}
+		
+		protected function initMouseCursor():void
+		{
+			var brush:MouseCursorData = new MouseCursorData();
+			brush.data = Vector.<BitmapData>([(new BRUSH() as Bitmap).bitmapData]);
+			var eraee:MouseCursorData = new MouseCursorData();
+			eraee.data = Vector.<BitmapData>([(new ERASE() as Bitmap).bitmapData]);
+			
+			Mouse.registerCursor("application:brush", brush);
+			Mouse.registerCursor("application:erase", eraee);
+		}
+		
+		protected function updateMouseImage(e:MouseEvent3D):void
+		{
+			if (e.shiftKey) {
+				Mouse.cursor = "application:brush";
+			} else if (e.altKey) {
+				Mouse.cursor = "application:erase";
+			} else {
+				Mouse.cursor = MouseCursor.AUTO;
+			}	
 		}
 		
 		protected function loadImageFor(callback:Function):void
@@ -119,7 +193,11 @@ package
 			fr.addEventListener(Event.SELECT, function(e:Event):void {
 				fr.load();
 			});
-			fr.browse([new FileFilter("Image(*.jpg,*.png)", "*.jpg;*.png")]);
+			try {
+				fr.browse([new FileFilter("Image(*.jpg,*.png)", "*.jpg;*.png")]);
+			} catch (e:Error) {
+				Utils.Trace(["FileReference#browse", e]);
+			}
 		}
 		
 		protected function onSaveImage(e:Event):void
@@ -127,20 +205,17 @@ package
 			var w:Number = _parent.stage.stageWidth;
 			var h:Number = _parent.stage.stageHeight;
 			_indicator = new LoadIndicator(_parent, w / 2, h / 2, w / 4, 30, w / 6, 4, 0xffffff, 2);
-			var timer:Timer = new Timer(200, 1);
-			timer.addEventListener(TimerEvent.TIMER_COMPLETE, function(e:TimerEvent):void {
-				var jpeg:JPGEncoder = new JPGEncoder(90);
-				var bytes:ByteArray = jpeg.encode(textureToImage());
-				var fr:FileReference = new FileReference();
-				var fin:Function = function(e:Event):void {
-					_indicator.destroy();
-					_indicator = null;
-				};
-				fr.addEventListener(Event.COMPLETE, fin);
-				fr.addEventListener(Event.CANCEL, fin);
-				fr.save(bytes, "Equirectangular.jpg");
-			});
-			timer.start();
+			
+			var jpeg:JPGEncoder = new JPGEncoder(90);
+			var bytes:ByteArray = jpeg.encode(textureToImage());
+			var fr:FileReference = new FileReference();
+			var fin:Function = function(e:Event):void {
+				_indicator.destroy();
+				_indicator = null;
+			};
+			fr.addEventListener(Event.COMPLETE, fin);
+			fr.addEventListener(Event.CANCEL, fin);
+			fr.save(bytes, "Equirectangular.jpg");
 		}
 		
 		protected var _brush:AGALGeometry;
@@ -220,7 +295,8 @@ package
 		
 		protected function paintBrush(e:MouseEvent3D):void
 		{
-			if (!_painting || (!e.shiftKey && !e.ctrlKey)) return;
+			updateMouseImage(e);
+			if (!_painting || (!e.shiftKey && !e.altKey)) return;
 			
 			var texel:Point = mouseEvent3DToTexcel(e);
 			var y_mag:Number = Math.PI / 3 / _camera.fov;
@@ -290,6 +366,7 @@ package
 		
 		protected function startPaint(e:MouseEvent3D):void
 		{
+			updateMouseImage(e);
 			_painting = true;
 			if (e.shiftKey || e.ctrlKey || e.altKey) {
 				_controller.disable();
@@ -298,6 +375,7 @@ package
 		}
 		protected function endPaint(e:MouseEvent3D):void
 		{
+			updateMouseImage(e);
 			_painting = false;
 			_controller.enable();
 		}
@@ -325,6 +403,18 @@ package
 				m.addEventListener(MouseEvent3D.MOUSE_UP, endPaint);
 				m.addEventListener(MouseEvent3D.MOUSE_OUT, endPaint);
 				m.addEventListener(MouseEvent3D.MOUSE_OVER, endPaint);
+				_controller.onShift(function(v:Boolean):void {
+					var e:MouseEvent3D = new MouseEvent3D("FromKey");
+					e.shiftKey = v;
+					e.altKey = false;
+					updateMouseImage(e);
+				})
+				_controller.onAlt(function(v:Boolean):void {
+					var e:MouseEvent3D = new MouseEvent3D("FromKey")
+					e.shiftKey = false;
+					e.altKey = v;
+					updateMouseImage(e);
+				})
 			}
 		}
 		
@@ -342,7 +432,7 @@ package
 			if (_baseBitmap) setupMaterial();
 		}
 		
-		public function load2(url:String, yaw_offset:Number):void
+		public function load2(url:String, yaw_offset:Number = 0):void
 		{
 			BitmapTextureResourceLoader.loadBitmapFromURL(url, function(bitmap:BitmapData):void {
 				applyBitmapToPaint(bitmap);

@@ -59,6 +59,9 @@ package
 			var y:Number = -Utils.to_rad(Number(htmlParams["yaw"] || "0"));
 			var p:Number = Utils.to_rad(Number(htmlParams["pitch"] || "0"));
 			
+			if (!ExternalInterface.available) {
+				playerMode = "sphere_merge";
+			}
 			switch (playerMode) {
 			case "sphere_walker":
 				_player = new SphereWalkerPlayer(stage.stageWidth, stage.stageHeight, this, opt);
@@ -76,8 +79,6 @@ package
 			}
 			_player.load(sourceUrl, yaw_offset);
 			_player.rotate(y, p);
-			
-			var tilt:TiltFilter = new TiltFilter(_stage3D.context3D);
 		}
 	}
 }

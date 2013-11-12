@@ -16,7 +16,7 @@
     </define>
     <define append="true">
       <name>CONFIG::timeStamp</name>
-      <value>'2013/11/11'</value>
+      <value>'2013/11/12'</value>
     </define>
     <define append="true">
       <name>CONFIG::air</name>
@@ -32,19 +32,20 @@
     </define>
     <verbose-stacktraces>true</verbose-stacktraces>
     <source-path append="true">
-      <path-element>D:\Documents\GitHub\flash_sphere_player\lib</path-element>
-      <path-element>D:\Documents\GitHub\flash_sphere_player\src</path-element>
-      <path-element>C:\bin\FlashDevelop\Library\AS3\classes</path-element>
+      <path-element>Z:\terasita\github\suzumura\flash_sphere_player\lib</path-element>
+      <path-element>Z:\terasita\github\suzumura\flash_sphere_player\src</path-element>
+      <path-element>C:\bin\FlashDevelop4\Tools\flexsdk\frameworks</path-element>
+      <path-element>C:\bin\FlashDevelop4\Library\AS3\classes</path-element>
     </source-path>
     <library-path append="true">
-      <path-element>D:\Documents\GitHub\flash_sphere_player\lib\Alternativa3D.swc</path-element>
-      <path-element>D:\Documents\GitHub\flash_sphere_player\lib\as3corelib.swc</path-element>
-      <path-element>D:\Documents\GitHub\flash_sphere_player\lib\as3crypto.swc</path-element>
-      <path-element>D:\Documents\GitHub\flash_sphere_player\lib\Progression4.swc</path-element>
+      <path-element>Z:\terasita\github\suzumura\flash_sphere_player\lib\Alternativa3D.swc</path-element>
+      <path-element>Z:\terasita\github\suzumura\flash_sphere_player\lib\as3corelib.swc</path-element>
+      <path-element>Z:\terasita\github\suzumura\flash_sphere_player\lib\as3crypto.swc</path-element>
+      <path-element>Z:\terasita\github\suzumura\flash_sphere_player\lib\Progression4.swc</path-element>
     </library-path>
   </compiler>
   <file-specs>
-    <path-element>D:\Documents\GitHub\flash_sphere_player\src\Main.as</path-element>
+    <path-element>Z:\terasita\github\suzumura\flash_sphere_player\src\Main.as</path-element>
   </file-specs>
   <default-background-color>#FFFFFF</default-background-color>
   <default-frame-rate>30</default-frame-rate>
