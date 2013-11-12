@@ -21,7 +21,7 @@ package
 		protected var _yaw_rad:Number;
 		protected var _isIdentity:Boolean;
 		
-		[Embed(source = "math.png")] protected static const MATH:Class;
+		[Embed(source = "resources/math.png")] protected static const MATH:Class;
 		
 		public function TiltFilter(context3D:Context3D)
 		{

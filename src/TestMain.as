@@ -47,7 +47,7 @@ package
 		private var _mirror:Mesh;
 		private var _mirrorTexture:RenderTextureResource;
 		
-		[Embed(source = "500x250.jpg")] private const TEXTURE:Class;
+		[Embed(source = "resources/500x250.jpg")] private const TEXTURE:Class;
 		
 		public function TestMain():void 
 		{

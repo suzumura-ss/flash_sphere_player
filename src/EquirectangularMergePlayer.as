@@ -50,15 +50,15 @@ package
 		protected var _beginPaint:Boolean = false;
 		protected var _painting:Boolean = false;
 		
-		[Embed(source = "Floppy.png")] protected static const FLOPPY_N:Class;
-		[Embed(source = "Floppy_a.png")] protected static const FLOPPY_A:Class;
-		[Embed(source = "Folder.png")] protected static const FOLDER_N:Class;
-		[Embed(source = "Folder_a.png")] protected static const FOLDER_A:Class;
-		[Embed(source = "Folder2.png")] protected static const FOLDER2_N:Class;
-		[Embed(source = "Folder2_a.png")] protected static const FOLDER2_A:Class;
-		[Embed(source = "check.png")] protected static const CHECK:Class;
-		[Embed(source = "brush.png")] protected static const BRUSH:Class;
-		[Embed(source = "erase.png")] protected static const ERASE:Class;
+		[Embed(source = "resources/Floppy.png")] protected static const FLOPPY_N:Class;
+		[Embed(source = "resources/Floppy_a.png")] protected static const FLOPPY_A:Class;
+		[Embed(source = "resources/Folder.png")] protected static const FOLDER_N:Class;
+		[Embed(source = "resources/Folder_a.png")] protected static const FOLDER_A:Class;
+		[Embed(source = "resources/Folder2.png")] protected static const FOLDER2_N:Class;
+		[Embed(source = "resources/Folder2_a.png")] protected static const FOLDER2_A:Class;
+		[Embed(source = "resources/check.png")] protected static const CHECK:Class;
+		[Embed(source = "resources/brush.png")] protected static const BRUSH:Class;
+		[Embed(source = "resources/erase.png")] protected static const ERASE:Class;
 		
 		public function EquirectangularMergePlayer(width_:Number, height_:Number, parent:Sprite, options:Dictionary = null):void
 		{

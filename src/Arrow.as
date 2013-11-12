@@ -20,7 +20,7 @@ package
 		protected var _upperClipped:Boolean;
 		protected var _lowerClipped:Boolean;
 		
-		[Embed(source = "arrow.png")] protected static const ARROW:Class;
+		[Embed(source = "resources/arrow.png")] protected static const ARROW:Class;
 		
 		public function Arrow(yaw:Number, pitch:Number)
 		{
