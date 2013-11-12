@@ -82,7 +82,7 @@ package info.smoche.alternativa
 			Texture(_texture).uploadFromBitmapData(_data, 0);
 		}
 		
-		static public var MAX_SIZE:uint = 12; // 2^12
+		static public var MAX_SIZE:uint = 11; // 2^11
 		static public function resizeImage2n(source:BitmapData):BitmapData
 		{
 			var wLog2Num:Number = Math.log(source.width)/Math.LN2;

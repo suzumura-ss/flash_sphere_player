@@ -5,6 +5,7 @@ package
 	import flash.events.*;
 	import flash.external.ExternalInterface;
 	import flash.utils.Dictionary;
+	import info.smoche.alternativa.NonMipmapBitmapTextureResource;
 	import info.smoche.utils.Utils;
 	
 	/**
@@ -34,6 +35,7 @@ package
 			_stage3D = stage.stage3Ds[0];
 			_stage3D.addEventListener(Event.CONTEXT3D_CREATE, onStage3DCreate);
 			_stage3D.requestContext3D("auto", Context3DProfile.BASELINE_EXTENDED);
+			NonMipmapBitmapTextureResource.MAX_SIZE = 12;
 		}
 		
 		protected function onStage3DCreate(e:Event):void
