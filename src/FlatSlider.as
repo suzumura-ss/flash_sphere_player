@@ -24,6 +24,7 @@ package
 		public var onChanged:Function = function(value:Number):void {}
 		public var onEditEnd:Function = function():void {}
 		
+		
 		public function FlatSlider(min:Number, max:Number, init:Number, width:Number, controller:SimpleObjectController)
 		{
 			super();

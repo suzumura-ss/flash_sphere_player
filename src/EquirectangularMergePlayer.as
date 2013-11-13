@@ -58,6 +58,7 @@ package
 		protected var _adjustMesh:Mesh;
 		protected var _adjusting:Boolean = false;
 		protected var _adjust_yaw:Number = 0;
+		protected var _adjust_roll:Number = 0;
 		
 		[Embed(source = "resources/Floppy.png")] protected static const FLOPPY_N:Class;
 		[Embed(source = "resources/Floppy_a.png")] protected static const FLOPPY_A:Class;
@@ -70,7 +71,18 @@ package
 		[Embed(source = "resources/erase.png")] protected static const ERASE:Class;
 		
 		/* TiltFilter実験 */
-		//protected var _tilt:TiltFilter;
+		protected var _tilt:TiltFilter;
+		protected var _source:BitmapData;
+		protected var _tiltResult:Bitmap;
+		protected function tilt(pitch:Number, roll:Number):void
+		{
+			if (_tiltResult) {
+				_parent.removeChild(_tiltResult);
+			}
+			_tiltResult = new Bitmap(TiltFilter.tilt(0, pitch, roll, _source));
+			_tiltResult.y = 200;
+			_parent.addChild(_tiltResult);
+		}
 		//protected var _tiltTexture:NonMipmapBitmapTextureResource;
 		//protected function tilt(pitch:Number, roll:Number):void
 		//{
@@ -93,6 +105,10 @@ package
 			initAdjustUI();
 			
 			/* TiltFilter実験 */
+			//_tiltResult = new Bitmap(new BitmapData(100, 50));
+			//_tiltResult.y = 200;
+			//_parent.addChild(_tiltResult);
+			
 			//_tiltTexture = new NonMipmapBitmapTextureResource(new BitmapData(1024, 512, true, 0));
 			//_plane = new Plane(200, 100);
 			//_plane.setMaterialToAllSurfaces(new NonMipmapTextureMaterial(_tiltTexture, 1, _stage3D.context3D));
@@ -187,19 +203,30 @@ package
 		
 		protected function initAdjustUI():void
 		{
-			var slider:FlatSlider = new FlatSlider( -10, 10, 0, 480, _controller);
-			slider.y = 64;
-			_parent.addChild(slider);
-			slider.onChanged = function(value:Number):void {
-				_adjust_yaw = -value / 180;
+			var sliderY:FlatSlider = new FlatSlider( -90, 90, 0, 480, _controller);
+			var sliderV:FlatSlider = new FlatSlider( -90, 90, 0, 480, _controller);
+			sliderY.y = 64;
+			sliderV.y = 64 + 40;
+			_parent.addChild(sliderY);
+			_parent.addChild(sliderV);
+			
+			sliderY.onChanged = function(value:Number):void {
+				_adjust_yaw = Utils.to_rad( -value);
 				_adjustMaterial.yaw_offset = _adjust_yaw;
 				_worldMesh.mesh().visible = false;
 				if (_adjustMesh) _adjustMesh.visible = true;
+				//tilt(_adjust_yaw, _adjust_roll);
 			}
-			slider.onEditEnd = function():void {
+			sliderY.onEditEnd = function():void {
 				_worldMesh.mesh().visible = true;
 				if (_adjustMesh) _adjustMesh.visible = false;
 			}
+			sliderV.onChanged = function(value:Number):void {
+				_adjust_roll = Utils.to_rad( -value);
+				//tilt(_adjust_yaw, _adjust_roll);
+			}
+			
+			
 		}
 		
 		protected function initMouseCursor():void
@@ -437,6 +464,8 @@ package
 		
 		protected function setupMaterial():void
 		{
+			_source = NonMipmapBitmapTextureResource.resizeImage(_baseBitmap.clone(), 2048, 1024);
+			
 			var stub:BitmapData = new BitmapData(_baseBitmap.width, _baseBitmap.height, false, 0);
 			_renderTexture = new NonMipmapBitmapTextureResource(stub.clone());
 			_baseTexture = new NonMipmapBitmapTextureResource(_baseBitmap.clone());
