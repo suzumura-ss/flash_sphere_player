@@ -73,27 +73,20 @@ package
 		protected var _tilt:TiltFilter;
 		protected var _source:BitmapData;
 		protected var _tiltResult:Bitmap;
+		protected var _tiltTexture:NonMipmapBitmapTextureResource;
+		protected var _tiltMaterial:AGALTiltMaterial
 		protected function tilt(yaw:Number, pitch:Number, roll:Number):void
 		{
-			if (_tiltResult) {
-				_parent.removeChild(_tiltResult);
-			}
-			_tiltResult = new Bitmap(TiltFilter.tilt(yaw, pitch, roll, _source));
-			_tiltResult.x = 40;
-			_tiltResult.y = 150;
-			_parent.addChild(_tiltResult);
-		}
-		//protected var _tiltTexture:NonMipmapBitmapTextureResource;
-		//protected function tilt(pitch:Number, roll:Number):void
-		//{
-			//var ctx:Context3D = _stage3D.context3D;
-			//if (!_tilt) {
-				//_tilt = new TiltFilter(ctx);
+			//if (_tiltResult) {
+				//_parent.removeChild(_tiltResult);
 			//}
-			//
-			//_tilt.setCompass(0, 0, 0);
-			//_tilt.applyFilter(_baseTexture.texture(), _tiltTexture.texture());
-		//}
+			//_tiltResult = new Bitmap(TiltFilter.tilt(yaw, pitch, roll, _source));
+			//_tiltResult.x = 40;
+			//_tiltResult.y = 150;
+			//_parent.addChild(_tiltResult);
+			
+			_tiltMaterial.setCompass(yaw, pitch, roll);
+		}
 		
 		protected var _plane:Plane;
 		public function EquirectangularMergePlayer(width_:Number, height_:Number, parent:Sprite, options:Dictionary = null):void
@@ -105,18 +98,14 @@ package
 			initAdjustUI();
 			
 			/* TiltFilter実験 */
-			//_tiltResult = new Bitmap(new BitmapData(100, 50));
-			//_tiltResult.y = 200;
-			//_parent.addChild(_tiltResult);
-			
-			//_tiltTexture = new NonMipmapBitmapTextureResource(new BitmapData(1024, 512, true, 0));
-			//_plane = new Plane(200, 100);
-			//_plane.setMaterialToAllSurfaces(new NonMipmapTextureMaterial(_tiltTexture, 1, _stage3D.context3D));
-			//_plane.rotationZ = Math.PI / 2;
-			//_plane.rotationX = Math.PI / 2;
-			//_plane.x = 300;
-			//_rootContainer.addChild(_plane);
-			//uploadResources();
+			_tiltTexture = new NonMipmapBitmapTextureResource(new BitmapData(2, 1, true, 0));
+			_plane = new Plane(1, 1);
+			_plane.setMaterialToAllSurfaces(new NonMipmapTextureMaterial(_tiltTexture, 1, _stage3D.context3D));
+			_plane.rotationZ = Math.PI / 2;
+			_plane.rotationX = Math.PI / 2;
+			_plane.x = 300;
+			_rootContainer.addChild(_plane);
+			uploadResources();
 			
 			// Setup Javascrit interfaces
 			if (ExternalInterface.available) {
@@ -474,6 +463,10 @@ package
 		{
 			_source = NonMipmapBitmapTextureResource.resizeImage(_baseBitmap.clone(), 256, 128);
 			
+			_tiltTexture = new NonMipmapBitmapTextureResource(_baseBitmap.clone());
+			_tiltMaterial = new AGALTiltMaterial(_tiltTexture, _stage3D.context3D);
+			_plane.setMaterialToAllSurfaces(_tiltMaterial);
+			
 			var stub:BitmapData = new BitmapData(_baseBitmap.width, _baseBitmap.height, false, 0);
 			_renderTexture = new NonMipmapBitmapTextureResource(stub.clone());
 			_baseTexture = new NonMipmapBitmapTextureResource(_baseBitmap.clone());
@@ -485,6 +478,9 @@ package
 									_stage3D.context3D);
 			_worldMesh.mesh().setMaterialToAllSurfaces(_paintMaterial);
 			
+			if (_adjustMesh) {
+				_rootContainer.removeChild(_adjustMesh)
+			}
 			_adjustMaterial = new AdjustTextuteMaterial(_renderTexture, _paintTexture, 0.5, _stage3D.context3D);
 			_adjustMesh = new GeoSphere(800, 8, true, _adjustMaterial);
 			_adjustMesh.visible = false;
