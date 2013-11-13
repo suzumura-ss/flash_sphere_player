@@ -24,53 +24,69 @@ package
 		public var onChanged:Function = function(value:Number):void {}
 		public var onEditEnd:Function = function():void {}
 		
+		protected function buttonBitmap():Bitmap
+		{
+			return new CIRCLE() as Bitmap;
+		}
+		
+		protected function lineBitmap():Bitmap
+		{
+			return new Bitmap(new BitmapData(_width + 32, 32, false, 0x86c351));
+		}
+		
+		protected function textLabel():TextField
+		{
+			var l:TextField = new TextField();
+			l.text = "0.00";
+			l.width = 50;
+			l.height = 20;
+			l.x = (_width + 32 - l.width) / 2;
+			l.y = (32 - l.height) / 2;
+			l.mouseEnabled = false;
+			return l;
+		}
+		
+		protected function toValue(e:MouseEvent):Number
+		{
+			return (e.localX - 16) * (_max - _min) / _width + _min;
+		}
+		
+		protected function updateButton(button:SimpleButton, label:TextField):void
+		{
+			label.text = _current.toFixed(2);
+			button.x = (_current - _min) * _width / (_max - _min);
+		}
 		
 		public function FlatSlider(min:Number, max:Number, init:Number, width:Number, controller:SimpleObjectController)
 		{
 			super();
-			
-			var bmp:Bitmap = new CIRCLE() as Bitmap;
-			var button:SimpleButton = new SimpleButton(bmp, bmp, bmp, bmp);
-			button.mouseEnabled = false;
 			
 			_min = min;
 			_max = max;
 			_current = init;
 			_width = width;
 			
-			bmp = new Bitmap(new BitmapData(width + button.width, bmp.height, false, 0x86c351));
+			var bmp:Bitmap = lineBitmap();
 			var line:SimpleButton = new SimpleButton(bmp, bmp, bmp, bmp);
 			line.alpha = 0.5;
 			addChild(line);
+			
+			bmp = buttonBitmap();
+			var button:SimpleButton = new SimpleButton(bmp, bmp, bmp, bmp);
+			button.mouseEnabled = false;
 			addChild(button);
 			
-			var label:TextField = new TextField();
-			label.text = "0.00";
-			label.width = 50;
-			label.height = 20;
-			label.x = (line.width - label.width) / 2;
-			label.y = (line.height - label.height) / 2;
-			label.mouseEnabled = false;
+			var label:TextField = textLabel();
 			addChild(label);
 			
-			var update:Function = function():void {
-				label.text = _current.toFixed(2);
-				button.x = (_current - _min) * _width / (_max - _min);
-			}
-			update();
+			updateButton(button, label);
 			
 			var dragging:Boolean = false;
 			var e:MouseEvent;
 			var move:Function = function(e:MouseEvent):void {
 				if (dragging) {
-					var v:Number = (e.localX - button.width / 2) * (_max - _min) / _width + _min;
-					if (v < _min) {
-						v = _min;
-					} else if (v > _max) {
-						v = _max;
-					}
-					_current = v;
-					update();
+					_current = Math.min(_max, Math.max(_min, toValue(e)));
+					updateButton(button, label);
 					onChanged(_current);
 				}
 			}

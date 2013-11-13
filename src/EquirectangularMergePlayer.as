@@ -58,7 +58,6 @@ package
 		protected var _adjustMesh:Mesh;
 		protected var _adjusting:Boolean = false;
 		protected var _adjust_yaw:Number = 0;
-		protected var _adjust_roll:Number = 0;
 		
 		[Embed(source = "resources/Floppy.png")] protected static const FLOPPY_N:Class;
 		[Embed(source = "resources/Floppy_a.png")] protected static const FLOPPY_A:Class;
@@ -74,13 +73,14 @@ package
 		protected var _tilt:TiltFilter;
 		protected var _source:BitmapData;
 		protected var _tiltResult:Bitmap;
-		protected function tilt(pitch:Number, roll:Number):void
+		protected function tilt(yaw:Number, pitch:Number, roll:Number):void
 		{
 			if (_tiltResult) {
 				_parent.removeChild(_tiltResult);
 			}
-			_tiltResult = new Bitmap(TiltFilter.tilt(0, pitch, roll, _source));
-			_tiltResult.y = 200;
+			_tiltResult = new Bitmap(TiltFilter.tilt(yaw, pitch, roll, _source));
+			_tiltResult.x = 40;
+			_tiltResult.y = 150;
 			_parent.addChild(_tiltResult);
 		}
 		//protected var _tiltTexture:NonMipmapBitmapTextureResource;
@@ -203,30 +203,38 @@ package
 		
 		protected function initAdjustUI():void
 		{
-			var sliderY:FlatSlider = new FlatSlider( -90, 90, 0, 480, _controller);
-			var sliderV:FlatSlider = new FlatSlider( -90, 90, 0, 480, _controller);
+			var adjust_pitch:Number = 0;
+			var adjust_roll:Number = 0;
+			var sliderY:FlatSlider = new FlatSlider( -90, 90, 0, 270, _controller);
+			var sliderP:FlatSlider = new FlatSlider( -90, 90, 0, 270, _controller);
+			var sliderR:VFlatSlider = new VFlatSlider( -90, 90, 0, 270, _controller);
 			sliderY.y = 64;
-			sliderV.y = 64 + 40;
+			sliderP.y = 64 + 40;
+			sliderR.y = 64 + 40 * 2;
 			_parent.addChild(sliderY);
-			_parent.addChild(sliderV);
+			_parent.addChild(sliderP);
+			_parent.addChild(sliderR);
 			
 			sliderY.onChanged = function(value:Number):void {
 				_adjust_yaw = Utils.to_rad( -value);
 				_adjustMaterial.yaw_offset = _adjust_yaw;
 				_worldMesh.mesh().visible = false;
 				if (_adjustMesh) _adjustMesh.visible = true;
-				//tilt(_adjust_yaw, _adjust_roll);
+				
+				tilt(_adjust_yaw, adjust_pitch, adjust_roll);
 			}
 			sliderY.onEditEnd = function():void {
 				_worldMesh.mesh().visible = true;
 				if (_adjustMesh) _adjustMesh.visible = false;
 			}
-			sliderV.onChanged = function(value:Number):void {
-				_adjust_roll = Utils.to_rad( -value);
-				//tilt(_adjust_yaw, _adjust_roll);
+			sliderP.onChanged = function(value:Number):void {
+				adjust_pitch = Utils.to_rad( -value);
+				tilt(_adjust_yaw, adjust_pitch, adjust_roll);
 			}
-			
-			
+			sliderR.onChanged = function(value:Number):void {
+				adjust_roll = Utils.to_rad( -value);
+				tilt(_adjust_yaw, adjust_pitch, adjust_roll);
+			}
 		}
 		
 		protected function initMouseCursor():void
@@ -464,7 +472,7 @@ package
 		
 		protected function setupMaterial():void
 		{
-			_source = NonMipmapBitmapTextureResource.resizeImage(_baseBitmap.clone(), 2048, 1024);
+			_source = NonMipmapBitmapTextureResource.resizeImage(_baseBitmap.clone(), 256, 128);
 			
 			var stub:BitmapData = new BitmapData(_baseBitmap.width, _baseBitmap.height, false, 0);
 			_renderTexture = new NonMipmapBitmapTextureResource(stub.clone());

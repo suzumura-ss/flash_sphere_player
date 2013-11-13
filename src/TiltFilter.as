@@ -37,17 +37,6 @@ package
 				-xz13,  xz12,  xz11, 0,
 				    0,     0,     0, 1,
 			]));
-			
-			m11 =  xz33;
-			m12 = -xz32;
-			m13 = -xz31;
-			m21 = -xz23;
-			m22 =  xz22;
-			m23 =  xz21;
-			m31 = -xz13;
-			m32 =  xz12;
-			m33 =  xz11;
-        
 			_yaw = yaw;
 		}
 		
@@ -69,6 +58,7 @@ package
 			
 			dest.lock();
 			
+			var dx:int = _width * _yaw / (2 * Math.PI);
 			for (var i:Number = 0; i < _height; ++i) {
 				var theta0:Number = Math.PI / 2 - Math.PI * i / _height;
 				var y0:Number = Math.sin(theta0);
@@ -82,14 +72,7 @@ package
 					var pos:Vector3D = _tilt.transformVector(new Vector3D(x0, y0, z0));
 					var theta:Number = Math.asin(pos.y);
 					var phi:Number = Math.atan2(pos.z, pos.x);
-					
-					//var x:Number = m11 * x0 + m12 * y0 + m13 * z0;
-					//var y:Number = m21 * x0 + m22 * y0 + m23 * z0;
-					//var z:Number = m31 * x0 + m32 * y0 + m33 * z0;
-					//var theta:Number = Math.asin(y);
-					//var phi:Number = Math.atan2(z, x);
-					
-					dest.setPixel32(j, i, pixelAtThetaPi(source, theta, phi));
+					dest.setPixel32((uint)(j + dx) % _width, i, pixelAtThetaPi(source, theta, phi));
 				}
 			}
 			
