@@ -99,7 +99,7 @@ package
 			
 			/* TiltFilter実験 */
 			_tiltTexture = new NonMipmapBitmapTextureResource(new BitmapData(2, 1, true, 0));
-			_plane = new Plane(1, 1);
+			_plane = new Plane(2, 2);
 			_plane.setMaterialToAllSurfaces(new NonMipmapTextureMaterial(_tiltTexture, 1, _stage3D.context3D));
 			_plane.rotationZ = Math.PI / 2;
 			_plane.rotationX = Math.PI / 2;
@@ -461,13 +461,23 @@ package
 		
 		protected function setupMaterial():void
 		{
+			if (_source) _source.dispose();
 			_source = NonMipmapBitmapTextureResource.resizeImage(_baseBitmap.clone(), 256, 128);
 			
+			if (_tiltTexture) {
+				_tiltTexture.dispose();
+			}
 			_tiltTexture = new NonMipmapBitmapTextureResource(_baseBitmap.clone());
 			_tiltMaterial = new AGALTiltMaterial(_tiltTexture, _stage3D.context3D);
 			_plane.setMaterialToAllSurfaces(_tiltMaterial);
 			
 			var stub:BitmapData = new BitmapData(_baseBitmap.width, _baseBitmap.height, false, 0);
+			if (_renderTexture) {
+				_renderTexture.dispose();
+				_baseTexture.dispose();
+				_paintTexture.dispose();
+				_resultTexture.dispose();
+			}
 			_renderTexture = new NonMipmapBitmapTextureResource(stub.clone());
 			_baseTexture = new NonMipmapBitmapTextureResource(_baseBitmap.clone());
 			_paintTexture = new NonMipmapBitmapTextureResource(_paintBitmap.clone());

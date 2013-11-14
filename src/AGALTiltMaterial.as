@@ -88,7 +88,8 @@ package
 				"#texture=0",
 				"#tex_atan=1",	// fs1: [R,G,B]=(atan2(x,z)/PI+1)/2
 				"#tex_asin=2",	// fs2: [R,G,B]=0.5-asin(y)/PI
-				"#ONE=0",		// fc0: [1, 2, 256, 65536]
+				"#ONE=0",		// fc0: [1, 2]
+				"#RGB2F=1",		// fc1:
 				"#TILT=2",		// fc2-4: [_tiltMatrix/3x3]
 				
 				// highp float phi0  [v0.x] = M_2PI * v_texcoord.x;
@@ -106,7 +107,7 @@ package
 				"mul ft1.x, ft0.w, ft0.y",
 				"mov ft1.y, ft0.z",
 				"mul ft1.z, ft0.w, ft0.x",
-				"m33 ft0.xyz, ft1.xyz, fc1",
+				"m33 ft0.xyz, ft1.xyz, fc2",
 				//=> -1<=x<=1, -1<=y<=1, -1<=z<=1
 				
 				// highp float phi[ft0.x] = atan(p.z[ft0.z], p.x[ft0.x]);
@@ -126,20 +127,18 @@ package
 				"sat ft0,xyz, ft0.xyz",
 				
 				"tex ft1, ft0.xz, fs1 <2d,clamp,linear>",	// (r,g,b) = atan2(x,z), fs1=atan2(-PI<=u=PI, -PI<=v=PI)
-				"div ft1.y, ft1.y, fc0.z",					// x = r + g/256 + b/65536
-				"div ft1.z, ft1.z, fc0.w",
+				"mul ft1.xyz, ft1.xyz, fc1.xyz",			// x = r + g/256 + b/65536
 				"add ft1.x, ft1.x, ft1.y",
 				"add ft1.x, ft1.x, ft1.z",
 				
 				"tex ft0, ft0.yy, fs2 <2d,clamp,linear>",	// (r,g,b) = 0.5-asin(y), fs2=0.5-asin(-PI/2<=u=PI/2), v=0
-				"div ft0.y, ft0.y, fc0.z",					// y = r + g/256 + b/65536
-				"div ft0.z, ft0.z, fc0.w",
+				"mul ft0.xyz, ft0.xyz, fc1.xyz",			// y = r + g/256 + b/65536
 				"add ft1.y, ft0.x, ft0.y",
 				"add ft1.y, ft1.y, ft0.z",
 				
 				// gl_FragColor[oc] = texture2D(texture[fs0], q[ft.0]);
 				"sat ft1.y, ft1.y",
-				"tex oc, ft1.xy, fs0 <2d,releat,linear>",
+				"tex oc, ft1.xy, fs0 <2d,repeat,linear>",
 			].join("\n"));
 		}
 		
@@ -159,8 +158,9 @@ package
 			drawUnit.setTextureAt(1, _mathTextures[0]._texture);
 			drawUnit.setTextureAt(2, _mathTextures[1]._texture);
 			drawUnit.setVertexConstantsFromNumbers(4,  Math.PI / 2, Math.PI, Math.PI * 2);
-			drawUnit.setFragmentConstantsFromNumbers(0, 1, 2, 256, 65536);
-			drawUnit.setFragmentConstantsFromTransform(1, _tilt);
+			drawUnit.setFragmentConstantsFromNumbers(0, 1, 2, 0);
+			drawUnit.setFragmentConstantsFromNumbers(1, 255 * 256 * 256 / 16777214.5, 255 * 256 / 16777214.5, 255 / 16777214.5);
+			drawUnit.setFragmentConstantsFromTransform(2, _tilt);
 		}
 	}
 }
