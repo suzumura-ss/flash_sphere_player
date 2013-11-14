@@ -73,22 +73,22 @@ package
 		protected var _tilt:TiltFilter;
 		protected var _source:BitmapData;
 		protected var _tiltResult:Bitmap;
-		protected var _tiltTexture:NonMipmapBitmapTextureResource;
-		protected var _tiltMaterial:AGALTiltMaterial
+		//protected var _tiltTexture:NonMipmapBitmapTextureResource;
+		//protected var _tiltMaterial:AGALTiltMaterial
 		protected function tilt(yaw:Number, pitch:Number, roll:Number):void
 		{
-			//if (_tiltResult) {
-				//_parent.removeChild(_tiltResult);
-			//}
-			//_tiltResult = new Bitmap(TiltFilter.tilt(yaw, pitch, roll, _source));
-			//_tiltResult.x = 40;
-			//_tiltResult.y = 150;
-			//_parent.addChild(_tiltResult);
+			if (_tiltResult) {
+				_parent.removeChild(_tiltResult);
+			}
+			_tiltResult = new Bitmap(TiltFilter.tilt(yaw, pitch, roll, _source));
+			_tiltResult.x = 40;
+			_tiltResult.y = 150;
+			_parent.addChild(_tiltResult);
 			
-			_tiltMaterial.setCompass(yaw, pitch, roll);
+			//_tiltMaterial.setCompass(yaw, pitch, roll);
 		}
 		
-		protected var _plane:Plane;
+		//protected var _plane:Plane;
 		public function EquirectangularMergePlayer(width_:Number, height_:Number, parent:Sprite, options:Dictionary = null):void
 		{
 			super(width_, height_, parent, options);
@@ -98,14 +98,14 @@ package
 			initAdjustUI();
 			
 			/* TiltFilter実験 */
-			_tiltTexture = new NonMipmapBitmapTextureResource(new BitmapData(2, 1, true, 0));
-			_plane = new Plane(2, 2);
-			_plane.setMaterialToAllSurfaces(new NonMipmapTextureMaterial(_tiltTexture, 1, _stage3D.context3D));
-			_plane.rotationZ = Math.PI / 2;
-			_plane.rotationX = Math.PI / 2;
-			_plane.x = 300;
-			_rootContainer.addChild(_plane);
-			uploadResources();
+			//_tiltTexture = new NonMipmapBitmapTextureResource(new BitmapData(2, 1, true, 0));
+			//_plane = new Plane(2, 2);
+			//_plane.setMaterialToAllSurfaces(new NonMipmapTextureMaterial(_tiltTexture, 1, _stage3D.context3D));
+			//_plane.rotationZ = Math.PI / 2;
+			//_plane.rotationX = Math.PI / 2;
+			//_plane.x = 300;
+			//_rootContainer.addChild(_plane);
+			//uploadResources();
 			
 			// Setup Javascrit interfaces
 			if (ExternalInterface.available) {
@@ -462,14 +462,14 @@ package
 		protected function setupMaterial():void
 		{
 			if (_source) _source.dispose();
-			_source = NonMipmapBitmapTextureResource.resizeImage(_baseBitmap.clone(), 256, 128);
+			_source = NonMipmapBitmapTextureResource.resizeImage(_baseBitmap.clone(), 1024, 512);
 			
-			if (_tiltTexture) {
-				_tiltTexture.dispose();
-			}
-			_tiltTexture = new NonMipmapBitmapTextureResource(_baseBitmap.clone());
-			_tiltMaterial = new AGALTiltMaterial(_tiltTexture, _stage3D.context3D);
-			_plane.setMaterialToAllSurfaces(_tiltMaterial);
+			//if (_tiltTexture) {
+				//_tiltTexture.dispose();
+			//}
+			//_tiltTexture = new NonMipmapBitmapTextureResource(_baseBitmap.clone());
+			//_tiltMaterial = new AGALTiltMaterial(_tiltTexture, _stage3D.context3D);
+			//_plane.setMaterialToAllSurfaces(_tiltMaterial);
 			
 			var stub:BitmapData = new BitmapData(_baseBitmap.width, _baseBitmap.height, false, 0);
 			if (_renderTexture) {
