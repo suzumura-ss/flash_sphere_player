@@ -43,66 +43,41 @@ package
 		
 		private var _width:uint;
 		private var _height:uint;
-		/*
-  ([x]+1-x) ([y]+1-y) Src([x],   [y])
-+ ([x]+1-x) (y-[y])   Src([x]+1, [y])
-+ (x-[x])   ([y]+1-y) Src([x],   [y]+1)
-+ (x-[x])   (y-[y])   Src([x]+1, [y]+1)
-w11 = [x]+1-x,  w12 = [y]+1-y
-w21 = x-[x]  ,  w22 = y-[y]
-  w11 * w12 * Src([x],   [y]  )
-+ w11 * w22 * Src([x]+1, [y]  )
-+ w21 * w12 * Src([x],   [y]+1)
-+ w21 * w22 * Src([x]+1, [y]+1)
-http://imagingsolution.net/imaging/interpolation/
-http://en.wikipedia.org/wiki/Nearest-neighbor_interpolation
-		 */
-		protected function average_color(rgb0:uint, rgb1:uint, w0:Number):uint
+		
+		// http://en.wikipedia.org/wiki/Nearest-neighbor_interpolation
+		static protected function RGB(weight:Number, rgb:uint):Object
 		{
-			var w1:Number = 1 - w0;
-			var r0:uint = rgb0 >> 16, g0:uint = (rgb0 >> 8) & 255, b0:uint = rgb0 & 255;
-			var r1:uint = rgb1 >> 16, g1:uint = (rgb1 >> 8) & 255, b1:uint = rgb1 & 255;
-			var r:Number = r0 * w0 + r1 * w1;
-			var g:Number = g0 * w0 + g1 * w1;
-			var b:Number = b0 * w0 + b1 * w1;
-			var c:uint = (r << 16) | (g << 8) | b;
-			return c;
+			return {
+				r: (rgb >> 16) * weight,
+				g: ((rgb >> 8) & 255) * weight,
+				b: (rgb & 255) * weight
+			};
 		}
-		protected function sampler(source:BitmapData, x0:Number, y0:Number, x1:Number, y1:Number, w0:Number):uint
+		static protected function RGB_Add(v1:Object, v2:Object):void
 		{
-			var rgb0:uint = source.getPixel(x0 % _width, y0);
-			var rgb1:uint = source.getPixel(x1 % _width, y1);
-			return average_color(rgb0, rgb1, w0);
+			v1.r += v2.r;
+			v1.g += v2.g;
+			v1.b += v2.b;
+		}
+		static protected function RGB_dec(v:Object):uint
+		{
+			return ((v.r & 255) << 16) | ((v.g & 255) << 8) | (v.b & 255);
 		}
 		
 		protected function pixelAtThetaPi(source:BitmapData, theta:Number, phi:Number):uint
 		{
-			var x0:Number = phi * _width / (2 * Math.PI) + _width;
-			var y0:Number = _height / 2 - theta * _height / Math.PI;
+			var x:Number = (phi * _width / (2 * Math.PI) + _width) % _width;
+			var y:Number = _height / 2 - theta * _height / Math.PI;
+			var ix:Number = uint(x), iy:Number = uint(y);
+			var ix1:Number = (ix + 1) % _width;
+			var ax:Number = x - ix,  ay:Number = y - iy;
 			
-			var rx:Number = x0 - Math.floor(x0);
-			var x1:Number, wx:Number;
-			if (rx < 0.5) {
-				x1 = x0 - 1;
-				wx = 0.5 + rx;
-			} else {
-				x1 = x0 + 1;
-				wx = 1.5 - rx;
-			}
-			var cu:uint = sampler(source, x0, y0, x1, y0, wx);
+			var color:Object = RGB((1 - ax) * (1 - ay), source.getPixel(ix,  iy    ));
+			RGB_Add(color,     RGB(     ax  * (1 - ay), source.getPixel(ix1, iy    )));
+			RGB_Add(color,     RGB((1 - ax) *      ay , source.getPixel(ix,  iy + 1)));
+			RGB_Add(color,     RGB(     ax  *      ay , source.getPixel(ix1, iy + 1)));
 			
-			var ry:Number = y0 - Math.floor(y0);
-			var y1:Number, wy:Number;
-			if (ry < 0.5) {
-				y1 = y0 - 1;
-				wy = 0.5 + ry;
-			} else {
-				y1 = y0 + 1;
-				wy = 1.5 - ry;
-			}
-			var cd:uint = sampler(source, x0, y1, x1, y1, wx);
-			
-			return average_color(cu, cd, wy);
+			return RGB_dec(color);
 		}
 		
 		public function apply(source:BitmapData):BitmapData
