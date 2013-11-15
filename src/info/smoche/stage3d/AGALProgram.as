@@ -1,6 +1,5 @@
 package info.smoche.stage3d 
 {
-	import alternativa.protocol.codec.complex.ByteArrayCodec;
 	import com.adobe.utils.AGALMiniAssembler;
 	import flash.display3D.Context3D;
 	import flash.display3D.Context3DProgramType;

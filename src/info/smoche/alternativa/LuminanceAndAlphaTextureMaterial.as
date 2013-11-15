@@ -1,5 +1,6 @@
 package info.smoche.alternativa
 {
+	import alternativa.engine3d.alternativa3d;
 	import alternativa.engine3d.core.DrawUnit;
 	import alternativa.engine3d.resources.TextureResource;
 	import flash.display3D.Context3D;

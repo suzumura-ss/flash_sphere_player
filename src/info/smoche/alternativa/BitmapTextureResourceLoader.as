@@ -1,7 +1,6 @@
 package info.smoche.alternativa
 {
 	import alternativa.engine3d.resources.BitmapTextureResource;
-	import alternativa.engine3d.resources.TextureResource;
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
 	import flash.display.Loader;
