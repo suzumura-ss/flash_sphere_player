@@ -67,6 +67,12 @@ package
 			_camera.fov = Utils.to_rad(_angle);
 		}
 		
+		public function angle(a:Number):void
+		{
+			_angle = a;
+			_camera.fov = Utils.to_rad(_angle);
+		}
+		
 		public function rotate(yaw:Number, pitch:Number):void
 		{
 			_lookAtWithRotation.yaw = yaw;

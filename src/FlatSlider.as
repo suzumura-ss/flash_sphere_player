@@ -20,9 +20,12 @@ package
 		protected var _min:Number;
 		protected var _max:Number;
 		protected var _current:Number;
+		protected var _button:SimpleButton;
+		protected var _label:TextField;
 		
-		public var onChanged:Function = function(value:Number):void {}
-		public var onEditEnd:Function = function():void {}
+		public var onEditStart:Function = function():void { }
+		public var onChanged:Function = function(value:Number):void { }
+		public var onEditEnd:Function = function():void { }
 		
 		protected function buttonBitmap():Bitmap
 		{
@@ -51,13 +54,13 @@ package
 			return (e.localX - 16) * (_max - _min) / _width + _min;
 		}
 		
-		protected function updateButton(button:SimpleButton, label:TextField):void
+		protected function updateButton():void
 		{
-			label.text = _current.toFixed(2);
-			button.x = (_current - _min) * _width / (_max - _min);
+			_label.text = _current.toFixed(2);
+			_button.x = (_current - _min) * _width / (_max - _min);
 		}
 		
-		public function FlatSlider(min:Number, max:Number, init:Number, width:Number, controller:SimpleObjectController)
+		public function FlatSlider(min:Number, max:Number, init:Number, width:Number)
 		{
 			super();
 			
@@ -72,32 +75,31 @@ package
 			addChild(line);
 			
 			bmp = buttonBitmap();
-			var button:SimpleButton = new SimpleButton(bmp, bmp, bmp, bmp);
-			button.mouseEnabled = false;
-			addChild(button);
+			_button = new SimpleButton(bmp, bmp, bmp, bmp);
+			_button.mouseEnabled = false;
+			addChild(_button);
 			
-			var label:TextField = textLabel();
-			addChild(label);
+			_label = textLabel();
+			addChild(_label);
 			
-			updateButton(button, label);
+			updateButton();
 			
 			var dragging:Boolean = false;
 			var e:MouseEvent;
 			var move:Function = function(e:MouseEvent):void {
 				if (dragging) {
 					_current = Math.min(_max, Math.max(_min, toValue(e)));
-					updateButton(button, label);
+					updateButton();
 					onChanged(_current);
 				}
 			}
 			var start:Function = function(e:MouseEvent):void {
 				dragging = true;
-				controller.disable();
+				onEditStart();
 				move(e);
 			}
 			var end:Function = function(e:MouseEvent):void {
 				dragging = false;
-				controller.enable();
 				onEditEnd();
 			}
 			line.addEventListener(MouseEvent.MOUSE_DOWN, start);
@@ -105,6 +107,17 @@ package
 			line.addEventListener(MouseEvent.MOUSE_UP, end);
 			line.addEventListener(MouseEvent.MOUSE_OUT, end);
 			line.addEventListener(MouseEvent.MOUSE_OVER, end);
+		}
+		
+		public function get value():Number
+		{
+			return _current;
+		}
+		
+		public function set value(v:Number):void
+		{
+			_current = Math.min(_max, Math.max(_min, v));
+			updateButton();
 		}
 	}
 }

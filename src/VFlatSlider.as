@@ -1,6 +1,5 @@
 package  
 {
-	import alternativa.engine3d.controllers.SimpleObjectController;
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
 	import flash.display.SimpleButton;
@@ -13,9 +12,9 @@ package
 	public class VFlatSlider extends FlatSlider 
 	{
 		
-		public function VFlatSlider(min:Number, max:Number, init:Number, width:Number, controller:SimpleObjectController)
+		public function VFlatSlider(min:Number, max:Number, init:Number, width:Number)
 		{
-			super(min, max, init, width, controller);
+			super(min, max, init, width);
 		}
 		
 		override protected function lineBitmap():Bitmap 
@@ -40,10 +39,10 @@ package
 			return (e.localY - 16) * (_max - _min) / _width + _min;
 		}
 		
-		override protected function updateButton(button:SimpleButton, label:TextField):void 
+		override protected function updateButton():void 
 		{
-			label.text = _current.toFixed(2);
-			button.y = (_current - _min) * _width / (_max - _min);
+			_label.text = _current.toFixed(2);
+			_button.y = (_current - _min) * _width / (_max - _min);
 		}
 	}
 }

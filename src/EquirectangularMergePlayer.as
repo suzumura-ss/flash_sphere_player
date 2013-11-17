@@ -194,9 +194,9 @@ package
 		{
 			var adjust_pitch:Number = 0;
 			var adjust_roll:Number = 0;
-			var sliderY:FlatSlider = new FlatSlider( -90, 90, 0, 270, _controller);
-			var sliderP:FlatSlider = new FlatSlider( -90, 90, 0, 270, _controller);
-			var sliderR:VFlatSlider = new VFlatSlider( -90, 90, 0, 270, _controller);
+			var sliderY:FlatSlider = new FlatSlider( -90, 90, 0, 270);
+			var sliderP:FlatSlider = new FlatSlider( -90, 90, 0, 270);
+			var sliderR:VFlatSlider = new VFlatSlider( -90, 90, 0, 270);
 			sliderY.y = 64;
 			sliderP.y = 64 + 40;
 			sliderR.y = 64 + 40 * 2;
@@ -204,6 +204,14 @@ package
 			_parent.addChild(sliderP);
 			_parent.addChild(sliderR);
 			
+			var enable_controller:Function = function():void {
+				_controller.enable();
+			}
+			var disable_controler:Function = function():void {
+				_controller.disable();
+			}
+			
+			sliderY.onEditStart = disable_controler;
 			sliderY.onChanged = function(value:Number):void {
 				_adjust_yaw = Utils.to_rad( -value);
 				_adjustMaterial.yaw_offset = _adjust_yaw;
@@ -215,15 +223,22 @@ package
 			sliderY.onEditEnd = function():void {
 				_worldMesh.mesh().visible = true;
 				if (_adjustMesh) _adjustMesh.visible = false;
+				enable_controller();
 			}
+			
+			sliderP.onEditStart = disable_controler;
 			sliderP.onChanged = function(value:Number):void {
 				adjust_pitch = Utils.to_rad( -value);
 				tilt(_adjust_yaw, adjust_pitch, adjust_roll);
 			}
+			sliderP.onEditEnd = enable_controller;
+			
+			sliderR.onEditStart = disable_controler;
 			sliderR.onChanged = function(value:Number):void {
 				adjust_roll = Utils.to_rad( -value);
 				tilt(_adjust_yaw, adjust_pitch, adjust_roll);
 			}
+			sliderR.onEditEnd = enable_controller;
 		}
 		
 		protected function initMouseCursor():void

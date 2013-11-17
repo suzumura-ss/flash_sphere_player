@@ -13,7 +13,7 @@ package
 	 * @author Toshiyuki Suzumura  / Twitter:@suzumura_ss
 	 */
 	
-	[SWF(width = "640", height = "480", frameRate = "30", backgroundColor = "#000000")]
+	[SWF(width = "640", height = "640", frameRate = "30", backgroundColor = "#000000")]
 	
 	public class Main extends Sprite 
 	{
@@ -62,7 +62,7 @@ package
 			var p:Number = Utils.to_rad(Number(htmlParams["pitch"] || "0"));
 			
 			if (!ExternalInterface.available) {
-				playerMode = "sphere_merge";
+				playerMode = "sphere_adjust";
 			}
 			switch (playerMode) {
 			case "sphere_walker":
@@ -74,6 +74,9 @@ package
 					// for debug
 					(_player as EquirectangularMergePlayer).load2("forest2.jpg", 0);
 				}
+				break;
+			case "sphere_adjust":
+				_player = new EquirectangularAdjustPlayer(stage.stageWidth, stage.stageHeight, this, opt);
 				break;
 			default:
 				_player = new EquirectangularPlayer(stage.stageWidth, stage.stageHeight, this, opt);
