@@ -57,6 +57,7 @@
     <element path="lib\as3corelib.swc" />
     <element path="lib\as3crypto.swc" />
     <element path="lib\Progression4.swc" />
+    <element path="lib\libWebpDec.swc" />
   </libraryPaths>
   <!-- External Libraries -->
   <externalLibraryPaths>

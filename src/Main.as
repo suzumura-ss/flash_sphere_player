@@ -43,7 +43,7 @@ package
 			_stage3D.removeEventListener(Event.CONTEXT3D_CREATE, onStage3DCreate);
 			
 			var htmlParams:Object = LoaderInfo(root.loaderInfo).parameters;
-			var sourceUrl:String = htmlParams["source"] || "forest.jpg";
+			var sourceUrl:String = htmlParams["source"] || "forest.webp";
 			var playerMode:String = htmlParams["mode"] || "sphere_walker";
 			var opt:Dictionary = new Dictionary();
 			opt["showDiagram"] = (htmlParams["showDiagram"]=="true") || true;

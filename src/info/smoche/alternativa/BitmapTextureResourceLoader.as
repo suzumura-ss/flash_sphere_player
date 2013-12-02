@@ -7,8 +7,14 @@ package info.smoche.alternativa
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;
 	import flash.external.ExternalInterface;
+	import flash.net.URLLoader;
+	import flash.net.URLLoaderDataFormat;
 	import flash.net.URLRequest;
 	import flash.utils.ByteArray;
+	import info.smoche.libWebp.Decode.WebP_decode;
+	import info.smoche.utils.Utils;
+	//import info.smoche.libWebp.Decode.WebP_getImageSize;
+	//import libWebp.Decode.decodeWebpAS;
 	import mx.utils.Base64Decoder;
 	/**
 	 * BitmapTextureResourceローダー
@@ -28,6 +34,32 @@ package info.smoche.alternativa
 		static public function loadBitmapFromURL(url:String, result:Function, onerror:Function):void
 		{
 			var current_flipH:Boolean = flipH;
+			
+			if (url.substr(url.length - 5) == ".webp") {
+				// for WebP
+				var urlLoader:URLLoader = new URLLoader();
+				urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
+				urlLoader.addEventListener(Event.COMPLETE, function(e:Event):void {
+					var bytes:ByteArray = urlLoader.data as ByteArray;
+					var s:Date = new Date();
+					var bitmap:BitmapData = WebP_decode(bytes);
+					Utils.Trace("lap:" + ((new Date()).getTime() - s.getTime()).toFixed(2));
+					try {
+						if (current_flipH) {
+							bitmap = NonMipmapBitmapTextureResource.flipImage(bitmap);
+						}
+						result(bitmap);
+					} catch (e:Error) {
+						onerror(e);
+					}
+				});
+				urlLoader.addEventListener(IOErrorEvent.IO_ERROR, function(e:IOErrorEvent):void {
+					onerror(e);
+				});
+				urlLoader.load(new URLRequest(url));
+				return;
+			}
+			
 			var loader:Loader = new Loader();
 			loader.contentLoaderInfo.addEventListener(Event.COMPLETE, function(e:Event):void {
 				try {
