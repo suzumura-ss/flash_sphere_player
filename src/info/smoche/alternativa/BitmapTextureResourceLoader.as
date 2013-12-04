@@ -35,15 +35,14 @@ package info.smoche.alternativa
 		{
 			var current_flipH:Boolean = flipH;
 			
+			var START:Date = new Date();
 			if (url.substr(url.length - 5) == ".webp") {
 				// for WebP
 				var urlLoader:URLLoader = new URLLoader();
 				urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
 				urlLoader.addEventListener(Event.COMPLETE, function(e:Event):void {
 					var bytes:ByteArray = urlLoader.data as ByteArray;
-					var s:Date = new Date();
 					var bitmap:BitmapData = WebP_decode(bytes);
-					Utils.Trace("lap:" + ((new Date()).getTime() - s.getTime()).toFixed(2));
 					try {
 						if (current_flipH) {
 							bitmap = NonMipmapBitmapTextureResource.flipImage(bitmap);
