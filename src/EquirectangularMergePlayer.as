@@ -36,6 +36,9 @@ package
 	import info.smoche.alternativa.RenderTextureResource;
 	import info.smoche.stage3d.AGALGeometry;
 	import info.smoche.stage3d.AGALProgram;
+	import info.smoche.TiltFilter.TiltFilter_apply;
+	import info.smoche.TiltFilter.TiltFilter_free;
+	import info.smoche.TiltFilter.TiltFilter_init;
 	import info.smoche.utils.Utils;
 	
 	/*
@@ -80,7 +83,26 @@ package
 			if (_tiltResult) {
 				_parent.removeChild(_tiltResult);
 			}
-			_tiltResult = new Bitmap(TiltFilter.tilt(yaw, pitch, roll, _source));
+			var START:Date = new Date();
+			if (0) {
+				// use AS3 version
+				_tiltResult = new Bitmap(TiltFilter.tilt(yaw, pitch, roll, _source));
+			} else {
+				// use CrossBridge version
+				var t:BitmapData = _source.clone();
+				{
+					var f:int = TiltFilter_init(yaw, pitch, roll);
+					try {
+						TiltFilter_apply(f, t, _parent);
+					} catch(e:Object) {
+						TiltFilter_free(f);
+						throw e;
+					}
+				}
+				_tiltResult = new Bitmap(t);
+			}
+			trace((new Date()).getTime() - START.getTime());
+			
 			_tiltResult.x = 40;
 			_tiltResult.y = 150;
 			_parent.addChild(_tiltResult);
