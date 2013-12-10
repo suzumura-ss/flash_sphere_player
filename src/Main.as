@@ -43,7 +43,7 @@ package
 			_stage3D.removeEventListener(Event.CONTEXT3D_CREATE, onStage3DCreate);
 			
 			var htmlParams:Object = LoaderInfo(root.loaderInfo).parameters;
-			var sourceUrl:String = htmlParams["source"] || "forest.webp";
+			var sourceUrl:String = htmlParams["source"] || "forest.jpg";
 			var playerMode:String = htmlParams["mode"] || "sphere_walker";
 			var opt:Dictionary = new Dictionary();
 			opt["showDiagram"] = (htmlParams["showDiagram"]=="true") || true;
@@ -62,7 +62,7 @@ package
 			var p:Number = Utils.to_rad(Number(htmlParams["pitch"] || "0"));
 			
 			if (!ExternalInterface.available) {
-				playerMode = "sphere_adjust";
+				playerMode = "sphere_blur";
 			}
 			switch (playerMode) {
 			case "sphere_walker":
@@ -74,6 +74,9 @@ package
 					// for debug
 					(_player as EquirectangularMergePlayer).load2("forest2.jpg", 0);
 				}
+				break;
+			case "sphere_blur":
+				_player = new EquirectangularBlurPlayer(stage.stageWidth, stage.stageHeight, this, opt);
 				break;
 			case "sphere_adjust":
 				_player = new EquirectangularAdjustPlayer(stage.stageWidth, stage.stageHeight, this, opt);

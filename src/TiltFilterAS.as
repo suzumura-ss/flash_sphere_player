@@ -8,7 +8,7 @@ package
 	 * ...
 	 * @author Toshiyuki Suzumura
 	 */
-	public class TiltFilter 
+	public class TiltFilterAS
 	{
 		protected var _yaw:Number;
 		protected var _tilt:Matrix3D;
@@ -16,7 +16,7 @@ package
 		protected var m21:Number, m22:Number, m23:Number;
 		protected var m31:Number, m32:Number, m33:Number;
 		
-		public function TiltFilter(yaw:Number, pitch:Number, roll:Number)
+		public function TiltFilterAS(yaw:Number, pitch:Number, roll:Number)
 		{
 			var cosP:Number = Math.cos(pitch);
 			var sinP:Number = Math.sin(pitch);
@@ -112,7 +112,7 @@ package
 		
 		static public function tilt(yaw:Number, pitch:Number, roll:Number, source:BitmapData):BitmapData
 		{
-			var self:TiltFilter = new TiltFilter(yaw, pitch, roll);
+			var self:TiltFilterAS = new TiltFilterAS(yaw, pitch, roll);
 			return self.apply(source);
 		}
 	}

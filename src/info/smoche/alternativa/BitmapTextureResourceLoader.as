@@ -13,8 +13,6 @@ package info.smoche.alternativa
 	import flash.utils.ByteArray;
 	import info.smoche.libWebp.Decode.WebP_decode;
 	import info.smoche.utils.Utils;
-	//import info.smoche.libWebp.Decode.WebP_getImageSize;
-	//import libWebp.Decode.decodeWebpAS;
 	import mx.utils.Base64Decoder;
 	/**
 	 * BitmapTextureResourceローダー

@@ -58,7 +58,7 @@
     <element path="lib\as3crypto.swc" />
     <element path="lib\Progression4.swc" />
     <element path="lib\libWebpDec.swc" />
-    <element path="lib\TiltFilter.swc" />
+    <element path="lib\TiltFilterBase.swc" />
   </libraryPaths>
   <!-- External Libraries -->
   <externalLibraryPaths>
