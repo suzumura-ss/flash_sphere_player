@@ -77,6 +77,7 @@ package
 		//protected var _tiltMaterial:AGALTiltMaterial
 		protected function tilt(yaw:Number, pitch:Number, roll:Number):void
 		{
+			/*
 			if (_tiltResult) {
 				_parent.removeChild(_tiltResult);
 			}
@@ -96,6 +97,7 @@ package
 			_parent.addChild(_tiltResult);
 			
 			//_tiltMaterial.setCompass(yaw, pitch, roll);
+			*/
 		}
 		
 		//protected var _plane:Plane;
@@ -211,8 +213,8 @@ package
 			sliderP.y = 64 + 40;
 			sliderR.y = 64 + 40 * 2;
 			_parent.addChild(sliderY);
-			_parent.addChild(sliderP);
-			_parent.addChild(sliderR);
+			_parent.addChild(sliderP);	sliderP.visible = false;
+			_parent.addChild(sliderR);	sliderR.visible = false;
 			
 			var enable_controller:Function = function():void {
 				_controller.enable();
