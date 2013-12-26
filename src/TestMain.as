@@ -26,6 +26,7 @@ package
 	import info.smoche.alternativa.NonMipmapTextureMaterial;
 	import info.smoche.alternativa.RenderTextureResource;
 	import info.smoche.alternativa.TextureCamera3D;
+	import info.smoche.ThetaEXIF;
 	import info.smoche.utils.LookAt3D;
 	import info.smoche.utils.Utils;
 	
@@ -128,7 +129,7 @@ package
 			_root.addChild(m);
 			
 			BitmapTextureResourceLoader.flipH = false;
-			BitmapTextureResourceLoader.loadURL("forest.jpg", function(tr:NonMipmapBitmapTextureResource):void {
+			BitmapTextureResourceLoader.loadURL("forest.jpg", function(tr:NonMipmapBitmapTextureResource, exif:ThetaEXIF):void {
 				m = new GeoSphere(2000, 4, true);
 				var w:WireFrame = WireFrame.createEdges(m, 0, 1, 2);
 				_root.addChild(w);

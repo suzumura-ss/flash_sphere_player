@@ -36,6 +36,7 @@ package
 	import info.smoche.alternativa.RenderTextureResource;
 	import info.smoche.stage3d.AGALGeometry;
 	import info.smoche.stage3d.AGALProgram;
+	import info.smoche.ThetaEXIF;
 	import info.smoche.TiltFilter;
 	import info.smoche.utils.Utils;
 	
@@ -77,7 +78,6 @@ package
 		//protected var _tiltMaterial:AGALTiltMaterial
 		protected function tilt(yaw:Number, pitch:Number, roll:Number):void
 		{
-			/*
 			if (_tiltResult) {
 				_parent.removeChild(_tiltResult);
 			}
@@ -97,7 +97,6 @@ package
 			_parent.addChild(_tiltResult);
 			
 			//_tiltMaterial.setCompass(yaw, pitch, roll);
-			*/
 		}
 		
 		//protected var _plane:Plane;
@@ -207,14 +206,14 @@ package
 			var adjust_pitch:Number = 0;
 			var adjust_roll:Number = 0;
 			var sliderY:FlatSlider = new FlatSlider( -90, 90, 0, 270);
-			var sliderP:FlatSlider = new FlatSlider( -90, 90, 0, 270);
-			var sliderR:VFlatSlider = new VFlatSlider( -90, 90, 0, 270);
+			var sliderR:FlatSlider = new FlatSlider( -90, 90, 0, 270);
+			var sliderP:VFlatSlider = new VFlatSlider( -90, 90, 0, 270);
 			sliderY.y = 64;
-			sliderP.y = 64 + 40;
-			sliderR.y = 64 + 40 * 2;
+			sliderR.y = 64 + 40;
+			sliderP.y = 64 + 40 * 2;
 			_parent.addChild(sliderY);
-			_parent.addChild(sliderP);	sliderP.visible = false;
-			_parent.addChild(sliderR);	sliderR.visible = false;
+			_parent.addChild(sliderR);	sliderR.visible = true;
+			_parent.addChild(sliderP);	sliderP.visible = true;
 			
 			var enable_controller:Function = function():void {
 				_controller.enable();
@@ -567,7 +566,7 @@ package
 		
 		public function load2(url:String, yaw_offset:Number = 0):void
 		{
-			BitmapTextureResourceLoader.loadBitmapFromURL(url, function(bitmap:BitmapData):void {
+			BitmapTextureResourceLoader.loadBitmapFromURL(url, function(bitmap:BitmapData, exif:ThetaEXIF):void {
 				applyBitmapToPaint(bitmap);
 				var js:String = _options["onLoadImageCompleted"];
 				if (ExternalInterface.available && js) {

@@ -13,6 +13,7 @@ package
 	import flash.utils.Dictionary;
 	import info.smoche.alternativa.BitmapTextureResourceLoader;
 	import info.smoche.alternativa.TextureCamera3D;
+	import info.smoche.ThetaEXIF;
 	import info.smoche.utils.Utils;
 	
 	/**
@@ -100,10 +101,11 @@ package
 		public function load(url:String, yaw_offset:Number):void
 		{
 			_parent.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
-			BitmapTextureResourceLoader.loadBitmapFromURL(url, function(bmp:BitmapData):void {
+			BitmapTextureResourceLoader.loadBitmapFromURL(url, function(bmp:BitmapData, exif:ThetaEXIF):void {
 				applyBitmapToTexture(bmp);
 				_worldMesh.mesh().rotationZ = Utils.to_rad(yaw_offset);
 				uploadResources();
+				Utils.Trace(exif);
 				
 				if (_indicator) {
 					_indicator.destroy();

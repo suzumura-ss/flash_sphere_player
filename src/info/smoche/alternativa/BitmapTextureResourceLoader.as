@@ -12,6 +12,7 @@ package info.smoche.alternativa
 	import flash.net.URLRequest;
 	import flash.utils.ByteArray;
 	import info.smoche.libWebp.Decode.WebP_decode;
+	import info.smoche.ThetaEXIF;
 	import info.smoche.utils.Utils;
 	import mx.utils.Base64Decoder;
 	/**
@@ -32,47 +33,31 @@ package info.smoche.alternativa
 		static public function loadBitmapFromURL(url:String, result:Function, onerror:Function):void
 		{
 			var current_flipH:Boolean = flipH;
-			
-			var START:Date = new Date();
-			if (url.substr(url.length - 5) == ".webp") {
-				// for WebP
-				var urlLoader:URLLoader = new URLLoader();
-				urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
-				urlLoader.addEventListener(Event.COMPLETE, function(e:Event):void {
-					var bytes:ByteArray = urlLoader.data as ByteArray;
-					var bitmap:BitmapData = WebP_decode(bytes);
-					try {
-						if (current_flipH) {
-							bitmap = NonMipmapBitmapTextureResource.flipImage(bitmap);
-						}
-						result(bitmap);
-					} catch (e:Error) {
-						onerror(e);
-					}
-				});
-				urlLoader.addEventListener(IOErrorEvent.IO_ERROR, function(e:IOErrorEvent):void {
-					onerror(e);
-				});
-				urlLoader.load(new URLRequest(url));
-				return;
-			}
-			
-			var loader:Loader = new Loader();
-			loader.contentLoaderInfo.addEventListener(Event.COMPLETE, function(e:Event):void {
+			var exif:ThetaEXIF;
+			var onLoadByteArray:Function = function(bytes:ByteArray):void {
+				exif = new ThetaEXIF(bytes);
+			};
+			var onFailed:Function = function(e:Event):void {
+				if (onerror!=null) onerror(e);
+			};
+			var onSuccess:Function = function(bitmap:BitmapData):void {
 				try {
-					var bitmap:BitmapData = (e.target.content as Bitmap).bitmapData;
 					if (current_flipH) {
 						bitmap = NonMipmapBitmapTextureResource.flipImage(bitmap);
 					}
-					result(bitmap);
+					result(bitmap, exif);
 				} catch (e:SecurityError) {
-					onerror(e);
+					onFailed(e);
 					return;
 				}
+			};
+			
+			var loader:Loader = new Loader();
+			loader.contentLoaderInfo.addEventListener(Event.COMPLETE, function(e:Event):void {
+				var bitmap:BitmapData = (e.target.content as Bitmap).bitmapData;
+				onSuccess(bitmap);
 			});
-			loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function(e:IOErrorEvent):void {
-				onerror(e);
-			});
+			loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, onFailed);
 			
 			var v:Array = url.split(":");
 			if (v[0] == "javascript") {
@@ -95,12 +80,26 @@ package info.smoche.alternativa
 					var decoder:Base64Decoder = new Base64Decoder();
 					decoder.decode(url.split(",")[1]);
 					var png:ByteArray = decoder.flush();
+					onLoadByteArray(png);
 					loader.loadBytes(png);
 				} catch (e:Error) {
-					onerror(e);
+					onFailed(e);
 				}
 			} else if (url.length > 0) {
-				loader.load(new URLRequest(url));
+				var urlLoader:URLLoader = new URLLoader();
+				urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
+				urlLoader.addEventListener(Event.COMPLETE, function(e:Event):void {
+					var bytes:ByteArray = urlLoader.data as ByteArray;
+					onLoadByteArray(bytes);
+					if (url.substr(url.length - 5) == ".webp") {
+						var bitmap:BitmapData = WebP_decode(bytes);
+						onSuccess(bitmap);
+					} else {
+						loader.loadBytes(bytes);
+					}
+				});
+				urlLoader.addEventListener(IOErrorEvent.IO_ERROR, onFailed);
+				urlLoader.load(new URLRequest(url));
 			} else {
 				onerror("Empty data.");
 			}
@@ -114,8 +113,8 @@ package info.smoche.alternativa
 		 * 		それ以外の場合はHTTPリクエストで画像を取得します。
 		 * @param	result
 		 * 		画像を取得してテクスチャリソースを生成できたらコールバックします。
-		 * 		useMipmap = true のときは BitmapTextureResource を、
-		 * 		useMipmap = false のときは NonMipmapBitmapTextureResource を引数にとります。
+		 * 		useMipmap = true のときは BitmapTextureResource と　ThetaEXIF を、
+		 * 		useMipmap = false のときは NonMipmapBitmapTextureResource と　ThetaEXIF を引数にとります。
 		 * @param	onerror
 		 * 		エラーが起きた場合にコールバックします。
 		 * 		文字列か Errorクラスを引数にとります。
@@ -123,11 +122,11 @@ package info.smoche.alternativa
 		static public function loadURL(url:String, result:Function, onerror:Function):void
 		{
 			var current_mipmap:Boolean = useMipmap;
-			loadBitmapFromURL(url, function(bitmap:BitmapData):void {
+			loadBitmapFromURL(url, function(bitmap:BitmapData, exif:ThetaEXIF):void {
 				if (current_mipmap) {
-					result(new BitmapTextureResource(bitmap, true));
+					result(new BitmapTextureResource(bitmap, true), exif);
 				} else {
-					result(new NonMipmapBitmapTextureResource(bitmap));
+					result(new NonMipmapBitmapTextureResource(bitmap), exif);
 				}
 			}, onerror);
 		}

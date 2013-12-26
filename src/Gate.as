@@ -4,6 +4,7 @@ package
 	import flash.display.BitmapData;
 	import flash.geom.Vector3D;
 	import info.smoche.alternativa.BitmapTextureResourceLoader;
+	import info.smoche.ThetaEXIF;
 	import info.smoche.utils.Utils;
 
 	/**
@@ -35,7 +36,7 @@ package
 			_yaw = yaw;
 			_pitch = pitch;
 			
-			BitmapTextureResourceLoader.loadBitmapFromURL(url, function(bmp:BitmapData):void {
+			BitmapTextureResourceLoader.loadBitmapFromURL(url, function(bmp:BitmapData, exif:ThetaEXIF):void {
 				_bitmapData = bmp;
 			}, function(e:Object):void {
 				Utils.Trace(e);
