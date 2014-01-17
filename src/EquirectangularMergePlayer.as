@@ -5,10 +5,10 @@ package
 	import alternativa.engine3d.primitives.GeoSphere;
 	import alternativa.engine3d.primitives.Plane;
 	import alternativa.engine3d.resources.TextureResource;
-	import com.adobe.images.JPGEncoder;
 	import com.sitedaniel.view.components.LoadIndicator;
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
+	import flash.display.JPEGEncoderOptions;
 	import flash.display.Loader;
 	import flash.display.SimpleButton;
 	import flash.display.Sprite;
@@ -21,6 +21,7 @@ package
 	import flash.events.TimerEvent;
 	import flash.external.ExternalInterface;
 	import flash.geom.Point;
+	import flash.geom.Rectangle;
 	import flash.net.FileFilter;
 	import flash.net.FileReference;
 	import flash.text.TextField;
@@ -90,7 +91,7 @@ package
 				var t:BitmapData = TiltFilter.tilt(yaw, pitch, roll, _source);
 				_tiltResult = new Bitmap(t);
 			}
-			Utils.Trace([_source.width, _source.height, (new Date()).getTime() - START.getTime()]);
+			//Utils.Trace([_source.width, _source.height, (new Date()).getTime() - START.getTime()]);
 			
 			_tiltResult.x = 40;
 			_tiltResult.y = 150;
@@ -196,7 +197,7 @@ package
 			box.border = true;
 			box.borderColor = 0x808080;
 			box.mouseEnabled = false;
-			box.text = "1. Load image (1)\n2. Load image (2).\n3. Paint with SHIFT/ALT + mouse.\n4. Save it.";
+			box.text = "1. Load image (1)\n2. Load image (2)\n3. Paint with SHIFT/ALT + mouse.\n4. Save it.";
 			box.x = button.width * 3;
 			_parent.addChild(box);
 		}
@@ -308,8 +309,8 @@ package
 			var h:Number = _parent.stage.stageHeight;
 			_indicator = new LoadIndicator(_parent, w / 2, h / 2, w / 4, 30, w / 6, 4, 0xffffff, 2);
 			
-			var jpeg:JPGEncoder = new JPGEncoder(90);
-			var bytes:ByteArray = jpeg.encode(textureToImage());
+			var bmp:BitmapData = textureToImage();
+			var bytes:ByteArray = bmp.encode(new Rectangle(0, 0, bmp.width, bmp.height), new JPEGEncoderOptions());
 			var fr:FileReference = new FileReference();
 			var fin:Function = function(e:Event):void {
 				_indicator.destroy();

@@ -4,7 +4,7 @@ package
 	import alternativa.engine3d.objects.Mesh;
 	import alternativa.engine3d.primitives.GeoSphere;
 	import alternativa.engine3d.resources.TextureResource;
-	import com.adobe.images.JPGEncoder;
+	import flash.display.JPEGEncoderOptions;
 	import com.sitedaniel.view.components.LoadIndicator;
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
@@ -30,12 +30,15 @@ package
 	import flash.ui.MouseCursorData;
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
+	import flash.utils.getTimer;
 	import flash.utils.Timer;
 	import info.smoche.alternativa.NonMipmapBitmapTextureResource;
 	import info.smoche.stage3d.AGALGeometry;
 	import info.smoche.stage3d.AGALProgram;
+	import info.smoche.ThetaEXIF;
 	import info.smoche.TiltFilter;
 	import info.smoche.utils.Utils;
+	import mx.graphics.codec.JPEGEncoder;
 	
 	/*
 	 * 
@@ -113,7 +116,7 @@ package
 			box.border = true;
 			box.borderColor = 0x808080;
 			box.mouseEnabled = false;
-			box.text = "1. Load image (1)\n2. Load image (2).\n3. Paint with SHIFT/ALT + mouse.\n4. Save it.";
+			box.text = "1. Load image (1)\n2. Paint with SHIFT/ALT + mouse.\n3. Save it.";
 			box.x = button.width * 3;
 			_parent.addChild(box);
 		}
@@ -156,6 +159,7 @@ package
 				loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function(e:IOErrorEvent):void {
 					Utils.Trace(e);
 				});
+				_exif = new ThetaEXIF(fr.data);
 				loader.loadBytes(fr.data);
 			});
 			fr.addEventListener(Event.SELECT, function(e:Event):void {
@@ -174,8 +178,8 @@ package
 			var h:Number = _parent.stage.stageHeight;
 			_indicator = new LoadIndicator(_parent, w / 2, h / 2, w / 4, 30, w / 6, 4, 0xffffff, 2);
 			
-			var jpeg:JPGEncoder = new JPGEncoder(90);
-			var bytes:ByteArray = jpeg.encode(textureToImage());
+			var bmp:BitmapData = textureToImage();
+			var bytes:ByteArray = bmp.encode(new Rectangle(0, 0, bmp.width, bmp.height), new JPEGEncoderOptions());
 			var fr:FileReference = new FileReference();
 			var fin:Function = function(e:Event):void {
 				_indicator.destroy();
@@ -416,6 +420,12 @@ package
 		override protected function applyBitmapToTexture(bitmap:BitmapData):void 
 		{
 			if (_baseBitmap) _baseBitmap.dispose();
+			Utils.Trace(_exif);
+			if (isNaN(_exif.yaw)) _exif.yaw = 0;
+			if (isNaN(_exif.pitch)) _exif.pitch = 0;
+			if (isNaN(_exif.roll)) _exif.roll = 0;
+			bitmap = TiltFilter.tilt(0, Utils.to_rad(_exif.pitch), Utils.to_rad(_exif.roll), bitmap);
+			_exif.yaw = _exif.pitch = _exif.roll = NaN;
 			_baseBitmap = NonMipmapBitmapTextureResource.flipImage(bitmap);
 			setupMaterial();
 		}
