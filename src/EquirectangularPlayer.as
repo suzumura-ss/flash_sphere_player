@@ -34,6 +34,7 @@ package
 		protected var _indicator:LoadIndicator;
 		protected var _worldMesh:WorldMesh;
 		protected var _options:Dictionary;
+		protected var _exif:ThetaEXIF;
 		
 		static protected const _IDENTITY:Matrix3D = new Matrix3D();
 		
@@ -102,10 +103,15 @@ package
 		{
 			_parent.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
 			BitmapTextureResourceLoader.loadBitmapFromURL(url, function(bmp:BitmapData, exif:ThetaEXIF):void {
+				_exif = exif;
+				Utils.Trace(["original exif", _exif]);
 				applyBitmapToTexture(bmp);
 				_worldMesh.mesh().rotationZ = Utils.to_rad(yaw_offset);
+				if (isNaN(_exif.yaw)) _exif.yaw = 0;
+				if (isNaN(_exif.pitch)) _exif.pitch = 0;
+				if (isNaN(_exif.roll)) _exif.roll = 0;
+				Utils.Trace(["apply", _exif]);
 				uploadResources();
-				Utils.Trace(exif);
 				
 				if (_indicator) {
 					_indicator.destroy();
