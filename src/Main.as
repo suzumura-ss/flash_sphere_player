@@ -62,8 +62,12 @@ package
 			var p:Number = Utils.to_rad(Number(htmlParams["pitch"] || "0"));
 			
 			if (!ExternalInterface.available) {
-				playerMode = "sphere_blur";
+				sourceUrl = "F1.mp4";
 			}
+			if (sourceUrl.substr(sourceUrl.length - 4, 4).toLowerCase() == ".mp4") {
+				playerMode = "sphere_video";
+			}
+			
 			switch (playerMode) {
 			case "sphere_walker":
 				_player = new SphereWalkerPlayer(stage.stageWidth, stage.stageHeight, this, opt);
@@ -80,6 +84,9 @@ package
 				break;
 			case "sphere_adjust":
 				_player = new EquirectangularAdjustPlayer(stage.stageWidth, stage.stageHeight, this, opt);
+				break;
+			case "sphere_video":
+				_player = new EquirectangularVideoPlayer(stage.stageWidth, stage.stageHeight, this, opt);
 				break;
 			default:
 				_player = new EquirectangularPlayer(stage.stageWidth, stage.stageHeight, this, opt);

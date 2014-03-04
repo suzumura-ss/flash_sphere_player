@@ -79,5 +79,11 @@ package info.smoche.stage3d
 			attach(program);
 			_context3D.drawTriangles(_indexBuffer);
 		}
+		
+		public function dispose():void
+		{
+			_vertexBuffer.dispose();
+			_indexBuffer.dispose();
+		}
 	}
 }
