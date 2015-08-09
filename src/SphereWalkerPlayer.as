@@ -33,6 +33,8 @@ package
 		
 		protected var _locus:Object3D;
 		protected var _locusAlpha:Number;
+		protected var _materialColor:Number = 0xA00C37; // 0xff4040
+		protected var _gateSize:Number = 70; // 100
 		
 		public function SphereWalkerPlayer(width_:Number, height_:Number, parent:Sprite, options:Dictionary = null)
 		{
@@ -182,7 +184,7 @@ package
 			var P:Quaternion = new Quaternion(0, 1, 0, 0);
 			var S:Quaternion = _startQ.mul(P).mul(_startQ.conjugate());
 			var E:Quaternion = _endQ.mul(P).mul(_endQ.conjugate());
-			_speed = 1.0 / S.sub(E).length() / 20; // 移動速度（ほぼ）一定
+			_speed = 1.0 / S.sub(E).length() /  10 /*20*/; // 移動速度（ほぼ）一定
 			
 			// 中間点を計算して
 			var mid:Quaternion = _startQ.slerp(_endQ, 0.5);
@@ -228,7 +230,7 @@ package
 				//trace(S.x.toFixed(2), S.y.toFixed(2), S.z.toFixed(2));
 				
 				var m:Mesh = new GeoSphere(10);
-				m.setMaterialToAllSurfaces(new FillMaterial(0xff4040));
+				m.setMaterialToAllSurfaces(new FillMaterial(_materialColor));
 				m.x = S.x*900;
 				m.y = S.y*900;
 				m.z = -S.z*900;
@@ -248,7 +250,7 @@ package
 			if (_locusAlpha > 0) {
 				for (var i:int = 0; i < _locus.numChildren; ++i) {
 					var m:Mesh = _locus.getChildAt(i) as Mesh;
-					m.setMaterialToAllSurfaces(new FillMaterial(0xff4040, _locusAlpha));
+					m.setMaterialToAllSurfaces(new FillMaterial(_materialColor, _locusAlpha));
 				}
 				uploadResources();
 			} else {
@@ -290,8 +292,8 @@ package
 		{
 			/* ToDo: yaw, pitch を radian にする */
 			var pos:LookAt3D = new LookAt3D(Utils.to_rad(-yaw), Utils.to_rad(pitch));
-			var box:Box = new Box();
-			var fm:FillMaterial = new FillMaterial(0x86c351, 1);
+			var box:Box = new Box(_gateSize, _gateSize, _gateSize);
+			var fm:FillMaterial = new FillMaterial(_materialColor, 1);
 			box.setMaterialToAllSurfaces(fm);
 			var wire:WireFrame = WireFrame.createEdges(box, 0xFFFFFF, 1, 2)
 			wire.scaleX = wire.scaleY = wire.scaleZ = 1.1;

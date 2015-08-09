@@ -44,12 +44,8 @@ package
 			
 			var htmlParams:Object = LoaderInfo(root.loaderInfo).parameters;
 			var sourceUrl:String = htmlParams["source"] || "forest.jpg";
-			var playerMode:String = htmlParams["mode"] || "sphere_walker";
 			var opt:Dictionary = new Dictionary();
-			opt["showDiagram"] = (htmlParams["showDiagram"]=="true") || true;
-			opt["hideLogo"] = (htmlParams["hideLogo"] == "true") || false;
-			opt["cubic"] = htmlParams["cubic"] || false;
-			opt["wheelControl"] = (htmlParams["wheelControl"] == "true") || true;
+			opt["wheelControl"] = (htmlParams["wheelControl"] == "true") || false;
 			opt["angle"] = Number(htmlParams["angle"]) || 60;
 			opt["angleMax"] = Number(htmlParams["angleMax"]) || 120;
 			opt["angleMin"] = Number(htmlParams["angleMin"]) || 30;
@@ -61,37 +57,7 @@ package
 			var y:Number = -Utils.to_rad(Number(htmlParams["yaw"] || "0"));
 			var p:Number = Utils.to_rad(Number(htmlParams["pitch"] || "0"));
 			
-			if (!ExternalInterface.available) {
-				sourceUrl = "F1.mp4";
-			}
-			if (sourceUrl.substr(sourceUrl.length - 4, 4).toLowerCase() == ".mp4") {
-				playerMode = "sphere_video";
-			}
-			
-			switch (playerMode) {
-			case "sphere_walker":
-				_player = new SphereWalkerPlayer(stage.stageWidth, stage.stageHeight, this, opt);
-				break;
-			case "sphere_merge":
-				_player = new EquirectangularMergePlayer(stage.stageWidth, stage.stageHeight, this, opt);
-				if (!ExternalInterface.available) {
-					// for debug
-					(_player as EquirectangularMergePlayer).load2("forest2.jpg", 0);
-				}
-				break;
-			case "sphere_blur":
-				_player = new EquirectangularBlurPlayer(stage.stageWidth, stage.stageHeight, this, opt);
-				break;
-			case "sphere_adjust":
-				_player = new EquirectangularAdjustPlayer(stage.stageWidth, stage.stageHeight, this, opt);
-				break;
-			case "sphere_video":
-				_player = new EquirectangularVideoPlayer(stage.stageWidth, stage.stageHeight, this, opt);
-				break;
-			default:
-				_player = new EquirectangularPlayer(stage.stageWidth, stage.stageHeight, this, opt);
-				break;
-			}
+			_player = new SphereWalkerPlayer(stage.stageWidth, stage.stageHeight, this, opt);
 			_player.load(sourceUrl, yaw_offset);
 			_player.rotate(y, p);
 		}

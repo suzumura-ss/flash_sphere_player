@@ -62,7 +62,7 @@ package
 			_rootContainer.addChild(_camera);
 			
 			// view
-			if (_options["hideLogo"]) _camera.view.hideLogo();
+			_camera.view.hideLogo();
 			_parent.addChild(_camera.view);
 			if (_options["showDiagram"]) _parent.addChild(_camera.diagram);
 			

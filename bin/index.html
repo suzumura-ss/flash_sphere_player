@@ -9,7 +9,7 @@
   <script>
     function name_to_path(name)
     {
-      return "walk/" + name + "_2k.jpg";
+      return "walk/" + name + ".JPG";
     }
 
     function WalkingGate(name, yaw, pitch, distance)
@@ -36,86 +36,72 @@
     }
 
     var SPHERES = {
-      // 廊下からエレベーターホール
-      "R0010222": {yaw: 0, gates:Gates([
-        ["R0010223",   0,  0, 2],
+      // 外周.
+      "R0014818": {yaw: 190, gates:Gates([
+        ["R0014817", -90,  0, 2],
         ])},
-      "R0010223": {yaw: -5, gates:Gates([
-        ["R0010222", 180,  0, 2],
-        ["R0010225",   0,  0, 2],
+      "R0014817": {yaw: 185, gates:Gates([
+        ["R0014818",  90,  0, 2],
+        ["R0014812", -90,  0, 2],
         ])},
-      "R0010225": {yaw: -5, gates:Gates([
-        ["R0010223", 180,  0, 2],
-        ["R0010226",   0,  0, 2],
-        ["R0010240",  90,  0, 2],
+      "R0014812": {yaw: 195, gates:Gates([
+        ["R0014817",  90,  0, 2],
+        ["R0014813", -90,  0, 2],
+        ["R0014820",   0,  0, 2],
         ])},
-      "R0010226": {yaw: -5, gates:Gates([
-        ["R0010225", 180,  0, 2],
-        ["R0010227",   0,  0, 2],
-        ["R0010231", -90,  0, 2],
+      "R0014813": {yaw: 195, gates:Gates([
+        ["R0014812",  90,  0, 2],
+        ["R0014814", -90,  0, 2],
         ])},
-      "R0010227": {yaw: -5, gates:Gates([
-        ["R0010226", 180,  0, 2],
-        ["R0010228",   0,  0, 2],
-        ["R0010234",  90,  0, 2],
+      "R0014814": {yaw: 185, gates:Gates([
+        ["R0014813",  90,  0, 2],
+        ["R0014815", -90,  0, 2],
         ])},
-      "R0010228": {yaw: -5, gates:Gates([
-        ["R0010227", 180,  0, 2],
-        ["R0010229",   0,  0, 2],
+      "R0014815": {yaw: 185, gates:Gates([
+        ["R0014814",  90,  0, 2],
+      //  ["R0014816", -90,  0, 2],
         ])},
-      "R0010229": {yaw: -5, gates:Gates([
-        ["R0010228", 180,  0, 2],
-        ["R0010230",   0,  0, 2],
+      /*"R0014816": {yaw: 165, gates:Gates([
+        ["R0014815",  90,  0, 2],
         ])},
-      "R0010230": {yaw: 0, gates:Gates([
-        ["R0010229", 180,  0, 2],
+      */
+      // 外周から廊下.
+      "R0014820": {yaw: 195, gates:Gates([
+        ["R0014821",   0,  0, 2],
+        ["R0014812", 180,  0, 2],
+        ])},
+      "R0014821": {yaw: 185, gates:Gates([
+        ["R0014822",   0,  0, 2],
+        ["R0014820", 180,  0, 2],
+        ])},
+      "R0014822": {yaw: 85, gates:Gates([
+        ["R0014825",   0,  0, 2],
+        ["R0014821", 180,  0, 2],
+        ["R0014823",  90,  0, 2],
+        ])},
+      "R0014823": {yaw:105, gates:Gates([
+        ["R0014822", -90,  0, 2],
+        ["R0014824",  90,  0, 2],
+        ])},
+      "R0014824": {yaw: 120, gates:Gates([
+        ["R0014823", -90,  0, 2],
         ])},
 
-      // 給湯室
-      "R0010231": {yaw: 0, gates:Gates([
-        ["R0010226",  90,  0, 2],
-        ["R0010232", 180,  0, 2],
+      // 廊下から中.
+      "R0014825": {yaw: 170, gates:Gates([
+        ["R0014826",   0,  0, 2],
+        ["R0014822", 180,  0, 2],
         ])},
-      "R0010232": {yaw: 0, gates:Gates([
-        ["R0010231",   0,  0, 2],
-        ["R0010233", -90,  0, 2],
+      "R0014826": {yaw: 10, gates:Gates([
+        ["R0014827",   0,  0, 2],
+        ["R0014822", 180,  0, 2],
         ])},
-      "R0010233": {yaw: 0, gates:Gates([
-        ["R0010232",  90,  0, 2],
-        ])},
-
-      // 居室
-      "R0010234": {yaw: 0, gates:Gates([
-        ["R0010227", -90,  0, 2],
-        ["R0010235",  90,  0, 2],
-        ])},
-      "R0010235": {yaw: 0, gates:Gates([
-        ["R0010234", -90,  0, 2],
-        ["R0010236",  90,  0, 2],
-        ])},
-      "R0010236": {yaw: 0, gates:Gates([
-        ["R0010235", -90,  0, 2],
-        ["R0010237", 180,  0, 2],
-        ])},
-      "R0010237": {yaw: 0, gates:Gates([
-        ["R0010236",   0,  0, 2],
-        ["R0010238", 180,  0, 2],
-        ])},
-      "R0010238": {yaw: 0, gates:Gates([
-        ["R0010237",   0,  0, 2],
-        ["R0010239", -90,  0, 2],
-        ])},
-      "R0010239": {yaw: 5, gates:Gates([
-        ["R0010238",  90,  0, 2],
-        ["R0010240", -90,  0, 2],
-        ])},
-      "R0010240": {yaw: -5, gates:Gates([
-        ["R0010239",  90,  0, 2],
-        ["R0010225", -90,  0, 2],
+      "R0014827": {yaw: -10, gates:Gates([
+        ["R0014826", 180,  0, 2],
         ])},
     };
 
-    var CURRET_SPHERE = "R0010222";
+    var CURRET_SPHERE = "R0014812";
     var yaw = 0;
     var pitch = 0;
     var q = window.location.search.split("?")[1];
@@ -138,14 +124,14 @@
 
     var flashvars = {
       source: name_to_path(CURRET_SPHERE),
-      angle: 90,
+      angle: 100,
       yaw: yaw,
       yaw_offset: SPHERES[CURRET_SPHERE].yaw,
       pitch: pitch,
-      hideLogo: false,
-      showDiagram: true,
+      hideLogo: true,
+      showDiagram: false,
       wheelControl: false,
-      walkSpeed: 0.05,
+      walkSpeed: 0.10,
       on_ready: "onLoadImageCompleted",
       on_walked: "onWalked",
     };
@@ -185,6 +171,9 @@
       e.preventDefault();
       $("#SpherePlayer")[0].mousewheel(d);
     });
+    function do_rotate(yaw) {
+      $("#SpherePlayer")[0].rotate(-yaw, 0);
+    }
 	</script>
 	<style>
 		html, body { height:100%; overflow:hidden; }
